@@ -1,0 +1,56 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          repository: select/select.github.io
+          token: ${{ secrets.DEPLOY_TOKEN }}
+          path: target-repo
+          fetch-depth: 0
+
+      - name: Copy content to universe folder
+        run: |
+          # Create universe directory if it doesn't exist
+          mkdir -p target-repo/universe
+
+          # Remove old content (except .git)
+          find target-repo/universe -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+
+          # Copy all content from source repo to universe folder
+          cp -r * target-repo/universe/ 2>/dev/null || true
+          cp -r .[!.]* target-repo/universe/ 2>/dev/null || true
+
+          # Remove .git directory from copied content to avoid nested repos
+          rm -rf target-repo/universe/.git
+          rm -rf target-repo/universe/.github
+
+      - name: Commit and push changes
+        run: |
+          # cd target-repo
+          git config user.name "GitHub Actions Bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Check if there are changes
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git add .
+          git commit -m "Deploy from vibe-universe repository - $(date +'%Y-%m-%d %H:%M:%S')"
+          git push origin main
