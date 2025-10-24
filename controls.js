@@ -168,6 +168,14 @@ export class Controls {
 	}
 
 	handleZoomScroll(event) {
+		// Don't allow zoom while center transition animation is running
+		if (
+			this.state.centerBodyTarget !== null ||
+			this.state.centerTransitionProgress > 0
+		) {
+			return;
+		}
+
 		const zoomSpeed = 0.5;
 		const previousScale = this.state.scale;
 
@@ -185,16 +193,18 @@ export class Controls {
 		// Update scale
 		this.state.scale = Math.pow(10, (50 - this.virtualZoomSlider) / 25);
 		this.elements.scaleValue.textContent = this.state.scale.toFixed(2) + "x";
-		this.updateScaleIndicators();
 
-		// Auto-exit moon view ONLY when zooming out (not in) and crossing below 0.5
+		// Auto-transition to solar system mode when zooming out below 0.5 in planet-moon mode
 		if (
-			this.state.viewMode === "planet-moons" &&
-			this.state.scale < 0.5 &&
-			this.state.scale < previousScale
+			this.state.scale < 1.5 &&
+			previousScale > this.state.scale &&
+			this.state.centerBody !== null
 		) {
-			this.callbacks.transitionToSolarSystem();
+			// Return to solar system view
+			this.callbacks.setCenterBody(null, null);
 		}
+
+		this.updateScaleIndicators();
 
 		this.callbacks.drawOrbits();
 		this.callbacks.updatePlanets();

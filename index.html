@@ -185,17 +185,77 @@
 				isPaused: false,
 				labelFontSize: 12, // Default font size for planet labels
 				viewMode: "solar-system", // 'solar-system' or 'planet-moons'
+				centerBody: null, // The celestial body at the center (null = sun)
+				centerBodyTarget: null, // Target body to transition to
+				centerTransitionProgress: 0, // 0-1 transition progress to new center
+				centerOffset: null, // Current center offset in 3D space (null = sun at origin)
 			};
 
 			let time = 0;
 			const minOrbitRadiusForLabel = 70; // Minimum orbit radius (in pixels) to show labels and enable interactions
 
-			// Planet selection state
-			let selectedPlanet = null;
-			let fadeOpacity = 1.0;
-			let planetOffset = new paper.Point(0, 0);
-			let transitionProgress = 0; // 0 = solar system, 1 = moon view
-			let selectedPlanetPosition = null; // Store planet's position during transition
+			// Central state for all celestial bodies (visibility, opacity, center status)
+			const celestialBodyStates = new Map(); // key: body.name -> { body, parentBody, isCenter, isCenterTarget, visible, targetVisible, opacity, targetOpacity }
+
+			// Initialize body states for all planets and moons
+			function initializeBodyStates() {
+				// Sun
+				celestialBodyStates.set("Sun", {
+					body: null, // null represents the sun
+					parentBody: null,
+					isCenter: true, // Sun starts as center
+					isCenterTarget: false,
+					visible: true,
+					targetVisible: true,
+					opacity: 1.0,
+					targetOpacity: 1.0,
+					orbitVisible: false, // Sun has no orbit
+					targetOrbitVisible: false,
+					orbitOpacity: 0.0,
+					targetOrbitOpacity: 0.0,
+					type: "sun",
+				});
+
+				// Planets
+				planetsData.forEach((planet) => {
+					celestialBodyStates.set(planet.name, {
+						body: planet,
+						parentBody: null,
+						isCenter: false,
+						isCenterTarget: false,
+						visible: true,
+						targetVisible: true,
+						opacity: 1.0,
+						targetOpacity: 1.0,
+						orbitVisible: true, // Planet orbits visible initially
+						targetOrbitVisible: true,
+						orbitOpacity: 1.0,
+						targetOrbitOpacity: 1.0,
+						type: "planet",
+					});
+
+					// Moons
+					if (planet.moons) {
+						planet.moons.forEach((moon) => {
+							celestialBodyStates.set(moon.name, {
+								body: moon,
+								parentBody: planet,
+								isCenter: false,
+								isCenterTarget: false,
+								visible: false, // Moons start invisible
+								targetVisible: false,
+								opacity: 0.0,
+								targetOpacity: 0.0,
+								orbitVisible: false, // Moon orbits start invisible
+								targetOrbitVisible: false,
+								orbitOpacity: 0.0,
+								targetOrbitOpacity: 0.0,
+								type: "moon",
+							});
+						});
+					}
+				});
+			}
 
 			// Groups for organized rendering
 			let axisGroup = new paper.Group();
@@ -205,28 +265,353 @@
 			let moonGroup = new paper.Group();
 			let clickAreaGroup = new paper.Group();
 
+			// Calculate 3D position of a celestial body at current time (with scale applied)
+			function getCelestialBody3DPosition(body, parentBody = null) {
+				// Calculate orbital angle based on time and period
+				const currentAngle = body.angle + (time / body.period) * Math.PI * 2;
+
+				// Calculate 3D position in orbit (apply scale here)
+				const scaledDistance = body.distance * simulationState.scale;
+				const x = Math.cos(currentAngle) * scaledDistance;
+				const z = Math.sin(currentAngle) * scaledDistance;
+
+				// Apply orbital inclination (rotate around x-axis)
+				const incRad = (body.orbitalInclination * Math.PI) / 180;
+				const y = z * Math.sin(incRad);
+				const zInclined = z * Math.cos(incRad);
+
+				// If this body has a parent (e.g., moon orbiting planet), add parent's position
+				if (parentBody) {
+					const parentPos = getCelestialBody3DPosition(parentBody);
+					return {
+						x: x + parentPos.x,
+						y: y + parentPos.y,
+						z: zInclined + parentPos.z,
+					};
+				}
+
+				return { x: x, y: y, z: zInclined };
+			}
+
 			// Convert 3D orbital position to 2D screen coordinates
-			function project3DTo2D(x, y, z, inclination, rotation = 0) {
+			function project3DTo2D(
+				x,
+				y,
+				z,
+				inclination,
+				rotation = 0,
+				centerOffset = null,
+			) {
+				// Apply center offset if provided (subtract center body's position)
+				let adjustedX = x;
+				let adjustedY = y;
+				let adjustedZ = z;
+
+				if (centerOffset) {
+					adjustedX -= centerOffset.x;
+					adjustedY -= centerOffset.y;
+					adjustedZ -= centerOffset.z;
+				}
+
 				// First apply rotation around Y axis
 				const rotRad = (rotation * Math.PI) / 180;
-				const xRot = x * Math.cos(rotRad) + z * Math.sin(rotRad);
-				const zRot = -x * Math.sin(rotRad) + z * Math.cos(rotRad);
+				const xRot =
+					adjustedX * Math.cos(rotRad) + adjustedZ * Math.sin(rotRad);
+				const zRot =
+					-adjustedX * Math.sin(rotRad) + adjustedZ * Math.cos(rotRad);
 
 				// Then apply inclination (rotation around X axis)
 				const incRad = (inclination * Math.PI) / 180;
 				const screenX = xRot;
-				const screenY = y * Math.cos(incRad) - zRot * Math.sin(incRad);
+				const screenY = adjustedY * Math.cos(incRad) - zRot * Math.sin(incRad);
 				return new paper.Point(screenX, screenY);
 			}
 
-			// Draw XYZ axis lines from the sun
+			// Update current center offset in simulationState (3D position of center body)
+			function updateCenterOffset() {
+				if (!simulationState.centerBody && !simulationState.centerBodyTarget) {
+					simulationState.centerOffset = null; // Sun is at origin, no offset
+					return;
+				}
+
+				// Calculate offset based on transition progress
+				let currentOffset = { x: 0, y: 0, z: 0 };
+				let targetOffset = { x: 0, y: 0, z: 0 };
+
+				// Get current center body position
+				if (simulationState.centerBody) {
+					currentOffset = getCelestialBody3DPosition(
+						simulationState.centerBody.body,
+						simulationState.centerBody.parentBody,
+					);
+				}
+
+				// Get target center body position
+				if (simulationState.centerBodyTarget) {
+					targetOffset = getCelestialBody3DPosition(
+						simulationState.centerBodyTarget.body,
+						simulationState.centerBodyTarget.parentBody,
+					);
+				}
+
+				// Interpolate between current and target
+				const progress = simulationState.centerTransitionProgress;
+				simulationState.centerOffset = {
+					x: currentOffset.x * (1 - progress) + targetOffset.x * progress,
+					y: currentOffset.y * (1 - progress) + targetOffset.y * progress,
+					z: currentOffset.z * (1 - progress) + targetOffset.z * progress,
+				};
+			}
+
+			// Update body states based on current center (visibility, opacity, fade transitions)
+			function updateBodyStates() {
+				// Determine which body should be centered
+				let centerBodyName = "Sun";
+				let centerBodyType = "sun";
+
+				if (simulationState.centerBodyTarget) {
+					// Transitioning to new center
+					if (simulationState.centerBodyTarget.body) {
+						centerBodyName = simulationState.centerBodyTarget.body.name;
+						centerBodyType =
+							celestialBodyStates.get(centerBodyName)?.type || "planet";
+					} else {
+						centerBodyName = "Sun";
+						centerBodyType = "sun";
+					}
+				} else if (simulationState.centerBody) {
+					// Already at center
+					if (simulationState.centerBody.body) {
+						centerBodyName = simulationState.centerBody.body.name;
+						centerBodyType =
+							celestialBodyStates.get(centerBodyName)?.type || "planet";
+					}
+				}
+
+				// Update target visibility and opacity for all bodies
+				celestialBodyStates.forEach((state, name) => {
+					// Update center flags
+					state.isCenterTarget = name === centerBodyName;
+
+					if (
+						simulationState.centerTransitionProgress === 0 &&
+						!simulationState.centerBodyTarget
+					) {
+						state.isCenter = state.isCenterTarget;
+					}
+
+					// Determine target visibility and opacity based on mode
+					if (centerBodyType === "sun") {
+						// Sun-centered mode: show sun and planets, hide moons
+						if (state.type === "sun") {
+							state.targetVisible = true;
+							state.targetOpacity = 1.0;
+							state.targetOrbitVisible = false;
+							state.targetOrbitOpacity = 0.0;
+						} else if (state.type === "planet") {
+							state.targetVisible = true;
+							state.targetOpacity = 1.0;
+							state.targetOrbitVisible = true;
+							state.targetOrbitOpacity = 1.0;
+						} else if (state.type === "moon") {
+							state.targetVisible = false;
+							state.targetOpacity = 0.0;
+							state.targetOrbitVisible = false;
+							state.targetOrbitOpacity = 0.0;
+						}
+					} else if (centerBodyType === "planet") {
+						// Planet-centered mode: show centered planet and its moons, hide others
+						if (name === centerBodyName) {
+							// The centered planet
+							state.targetVisible = true;
+							state.targetOpacity = 1.0;
+							state.targetOrbitVisible = false; // Hide planet's orbit (it's at center)
+							state.targetOrbitOpacity = 0.0;
+						} else if (state.type === "sun") {
+							// Hide sun
+							state.targetVisible = false;
+							state.targetOpacity = 0.0;
+							state.targetOrbitVisible = false;
+							state.targetOrbitOpacity = 0.0;
+						} else if (state.type === "planet") {
+							// Hide other planets
+							state.targetVisible = false;
+							state.targetOpacity = 0.0;
+							state.targetOrbitVisible = false;
+							state.targetOrbitOpacity = 0.0;
+						} else if (state.type === "moon") {
+							// Show only moons of the centered planet
+							if (
+								state.parentBody &&
+								state.parentBody.name === centerBodyName
+							) {
+								state.targetVisible = true;
+								state.targetOpacity = 1.0;
+								state.targetOrbitVisible = true; // Show moon orbits
+								state.targetOrbitOpacity = 1.0;
+							} else {
+								state.targetVisible = false;
+								state.targetOpacity = 0.0;
+								state.targetOrbitVisible = false;
+								state.targetOrbitOpacity = 0.0;
+							}
+						}
+					} else if (centerBodyType === "moon") {
+						// Moon-centered mode: show centered moon and sibling moons, hide everything else
+						const centerState = celestialBodyStates.get(centerBodyName);
+						const centerParentName = centerState?.parentBody?.name;
+
+						if (name === centerBodyName) {
+							// The centered moon
+							state.targetVisible = true;
+							state.targetOpacity = 1.0;
+							state.targetOrbitVisible = false; // Hide centered moon's orbit
+							state.targetOrbitOpacity = 0.0;
+						} else if (state.type === "sun") {
+							// Hide sun
+							state.targetVisible = false;
+							state.targetOpacity = 0.0;
+							state.targetOrbitVisible = false;
+							state.targetOrbitOpacity = 0.0;
+							state.targetOrbitVisible = false;
+							state.targetOrbitOpacity = 0.0;
+						} else if (state.type === "planet") {
+							// Show parent planet dimmed, hide others
+							if (name === centerParentName) {
+								state.targetVisible = true;
+								state.targetOpacity = 0.3;
+								state.targetOrbitVisible = false; // Hide parent planet orbit
+								state.targetOrbitOpacity = 0.0;
+							} else {
+								state.targetVisible = false;
+								state.targetOpacity = 0.0;
+								state.targetOrbitVisible = false;
+								state.targetOrbitOpacity = 0.0;
+							}
+						} else if (state.type === "moon") {
+							// Show sibling moons (same parent), hide others
+							if (
+								state.parentBody &&
+								state.parentBody.name === centerParentName
+							) {
+								state.targetVisible = true;
+								state.targetOpacity = 1.0;
+							} else {
+								state.targetVisible = false;
+								state.targetOpacity = 0.0;
+								state.targetOrbitVisible = false;
+								state.targetOrbitOpacity = 0.0;
+							}
+						}
+					}
+				});
+
+				// Animate opacity transitions (smooth fade in/out)
+				const fadeSpeed = 0.05; // Opacity change per frame
+				let anyChanging = false;
+
+				celestialBodyStates.forEach((state) => {
+					// Fade body opacity toward target
+					if (state.opacity < state.targetOpacity) {
+						state.opacity = Math.min(
+							state.targetOpacity,
+							state.opacity + fadeSpeed,
+						);
+						anyChanging = true;
+					} else if (state.opacity > state.targetOpacity) {
+						state.opacity = Math.max(
+							state.targetOpacity,
+							state.opacity - fadeSpeed,
+						);
+						anyChanging = true;
+					}
+
+					// Fade orbit opacity toward target
+					if (state.orbitOpacity < state.targetOrbitOpacity) {
+						state.orbitOpacity = Math.min(
+							state.targetOrbitOpacity,
+							state.orbitOpacity + fadeSpeed,
+						);
+						anyChanging = true;
+					} else if (state.orbitOpacity > state.targetOrbitOpacity) {
+						state.orbitOpacity = Math.max(
+							state.targetOrbitOpacity,
+							state.orbitOpacity - fadeSpeed,
+						);
+						anyChanging = true;
+					}
+
+					// Update visibility (becomes invisible when opacity reaches 0)
+					if (state.opacity <= 0) {
+						state.visible = false;
+					} else {
+						state.visible = true;
+					}
+
+					// Update orbit visibility
+					if (state.orbitOpacity <= 0) {
+						state.orbitVisible = false;
+					} else {
+						state.orbitVisible = true;
+					}
+				});
+
+				return anyChanging;
+			}
+
+			// Set a new center body with smooth transition
+			function setCenterBody(body, parentBody = null) {
+				// If clicking on current center, do nothing
+				if (
+					simulationState.centerBody &&
+					simulationState.centerBody.body === body
+				) {
+					return;
+				}
+
+				// If clicking sun when already on sun, do nothing
+				if (!body && !simulationState.centerBody) {
+					return;
+				}
+
+				// Store the target
+				simulationState.centerBodyTarget = body
+					? {
+							body: body,
+							parentBody: parentBody,
+						}
+					: null;
+				simulationState.centerTransitionProgress = 0;
+
+				// Animate transition
+				const steps = 25;
+				const stepDuration = 20;
+				let step = 0;
+
+				const interval = setInterval(() => {
+					step++;
+					const progress = step / steps;
+
+					// Ease out cubic
+					const eased = 1 - Math.pow(1 - progress, 3);
+					simulationState.centerTransitionProgress = eased;
+
+					if (step >= steps) {
+						clearInterval(interval);
+						// Transition complete - make target the new center
+						simulationState.centerBody = simulationState.centerBodyTarget;
+						simulationState.centerBodyTarget = null;
+						simulationState.centerTransitionProgress = 0;
+					}
+				}, stepDuration);
+			}
+
+			// Draw XYZ axis lines at screen center (fixed position and size)
 			function drawAxisLines() {
 				axisGroup.removeChildren();
 
-				// Skip axis lines in moon view mode
-				if (simulationState.viewMode === "planet-moons") return;
-
-				const axisLength = 50 * simulationState.scale; // Length of axis lines (even smaller)
+				// Fixed axis length (never scales)
+				const axisLength = 50;
 
 				// X-axis (Red) - extends along the X direction
 				const xEnd3D = { x: axisLength, y: 0, z: 0 };
@@ -236,6 +621,7 @@
 					xEnd3D.z,
 					simulationState.inclination,
 					simulationState.rotation,
+					null, // No center offset - always at screen center
 				);
 				const xLine = new paper.Path.Line(center, center.add(xEndPos));
 				xLine.strokeColor = "#FF4444"; // Red
@@ -251,6 +637,7 @@
 					yEnd3D.z,
 					simulationState.inclination,
 					simulationState.rotation,
+					null, // No center offset - always at screen center
 				);
 				const yLine = new paper.Path.Line(center, center.add(yEndPos));
 				yLine.strokeColor = "#44FF44"; // Green
@@ -266,6 +653,7 @@
 					zEnd3D.z,
 					simulationState.inclination,
 					simulationState.rotation,
+					null, // No center offset - always at screen center
 				);
 				const zLine = new paper.Path.Line(center, center.add(zEndPos));
 				zLine.strokeColor = "#4444FF"; // Blue
@@ -316,35 +704,23 @@
 
 				if (!simulationState.showOrbits) return;
 
-				// Skip planet orbits in moon view mode
-				if (simulationState.viewMode === "planet-moons") return;
-
+				// Draw planet orbits
 				planetsData.forEach((planet) => {
-					// Skip non-selected planet orbits when fading
-					if (
-						selectedPlanet &&
-						selectedPlanet !== planet &&
-						fadeOpacity < 1.0
-					) {
-						return;
+					// Check if planet's orbit should be visible
+					const planetState = celestialBodyStates.get(planet.name);
+					if (!planetState || !planetState.orbitVisible) {
+						return; // Skip invisible orbits
 					}
 
 					// Draw planet orbit using unified function
 					drawOrbitPath({
-						centerPosition: center,
 						distance: planet.distance,
 						scale: simulationState.scale,
 						color: planet.color,
 						orbitalInclination: planet.orbitalInclination,
-						inclination: simulationState.inclination,
-						time: time,
-						period: planet.period,
-						angle: planet.angle,
-						transitionProgress:
-							selectedPlanet === planet ? transitionProgress : 0,
 						segments: 100,
 						strokeWidth: 1,
-						alpha: 0.2,
+						alpha: 0.2 * planetState.orbitOpacity, // Apply orbit opacity
 						group: orbitGroup,
 					});
 				});
@@ -370,12 +746,15 @@
 					position, // paper.Point - center position of body
 					startRadius, // number - radius where label line starts (click circle radius)
 					name, // string - label text
-					labelSuffix = "", // string - optional suffix (e.g., "(-10x)")
+					isScaledDown = false, // boolean - whether body is scaled down
 					bodyType, // string - "planet" or "moon"
 					opacity = 1, // number - opacity
 					targetGroup, // paper.Group - group to add label to (labelGroup or moonGroup)
 					currentLayer = null, // string - current layer being displayed (e.g., "surface")
 				} = config;
+
+				// Generate label suffix based on scaling
+				const labelSuffix = isScaledDown ? " (-10x)" : "";
 
 				// Line segment lengths (smaller for moons)
 				const segment1Length = bodyType === "planet" ? 10 : 5;
@@ -492,43 +871,26 @@
 				}
 			}
 
-			// Helper function to calculate orbital position
-			function calculateOrbitalPosition(config) {
-				const {
-					time, // number - current time
-					period, // number - orbital period
-					angle, // number - starting angle offset
-					distance, // number - orbital distance
-					scale, // number - scaling factor
-					orbitalInclination, // number - orbital inclination in degrees
-					inclination, // number - view inclination in degrees
-				} = config;
-
-				// Calculate orbital angle based on time and period
-				const currentAngle = angle + (time / period) * Math.PI * 2;
-
-				// Calculate 3D position (apply simulationState.scale)
-				const scaledDistance = distance * simulationState.scale;
-				const x = Math.cos(currentAngle) * scaledDistance;
-				const z = Math.sin(currentAngle) * scaledDistance;
-
-				// Apply orbital simulationState.inclination (rotate around x-axis)
-				const incRad = (orbitalInclination * Math.PI) / 180;
-				const y = z * Math.sin(incRad);
-				const zInclined = z * Math.cos(incRad);
+			// Helper function to calculate orbital position (deprecated - use getCelestialBody3DPosition + project3DTo2D)
+			function calculateOrbitalPosition(body, parentBody = null) {
+				// Get 3D position
+				const pos3D = getCelestialBody3DPosition(body, parentBody);
 
 				// Project to 2D
 				const screenPos = project3DTo2D(
-					x,
-					y,
-					zInclined,
+					pos3D.x,
+					pos3D.y,
+					pos3D.z,
 					simulationState.inclination,
 					simulationState.rotation,
+					simulationState.centerOffset,
 				);
+
+				// Calculate scaled distance
+				const scaledDistance = body.distance * simulationState.scale;
 
 				return {
 					screenPos: screenPos, // paper.Point - 2D projected position
-					angle: currentAngle, // number - current orbital angle
 					scaledDistance: scaledDistance, // number - scaled distance
 				};
 			}
@@ -536,16 +898,11 @@
 			// Helper function to draw an orbit path
 			function drawOrbitPath(config) {
 				const {
-					centerPosition, // paper.Point - center of the orbit
 					distance, // number - orbit radius in original units
 					scale, // number - scaling factor
 					color, // string - orbit color
 					orbitalInclination, // number - inclination in degrees
-					inclination, // number - view inclination
-					time, // number - current time (for planet orbits)
-					period, // number - orbital period (for planet orbits)
-					angle, // number - starting angle (for planet orbits)
-					transitionProgress = 0, // number - transition progress (0-1)
+					parentBody3DPos = null, // object - 3D position of parent body (for moon orbits)
 					segments = 100, // number - number of segments for the path
 					strokeWidth = 1, // number - orbit stroke width
 					alpha = 0.2, // number - orbit opacity
@@ -567,52 +924,38 @@
 				orbitPath.strokeColor = orbitColor;
 				orbitPath.strokeWidth = strokeWidth;
 
-				// Calculate orbit center offset during transition (for planet orbits)
-				let orbitCenterOffset = new paper.Point(0, 0);
-				if (
-					transitionProgress > 0 &&
-					time !== undefined &&
-					period !== undefined &&
-					angle !== undefined
-				) {
-					// Calculate where the body currently is in its orbit
-					const currentAngle = angle + (time / period) * Math.PI * 2;
-					const x = Math.cos(currentAngle) * distance * simulationState.scale;
-					const z = Math.sin(currentAngle) * distance * simulationState.scale;
-					const incRad = (orbitalInclination * Math.PI) / 180;
-					const y = z * Math.sin(incRad);
-					const zInclined = z * Math.cos(incRad);
-					const currentBodyPos = project3DTo2D(
-						x,
-						y,
-						zInclined,
-						simulationState.inclination,
-						simulationState.rotation,
-					);
-
-					// Offset orbit so body position moves toward center
-					orbitCenterOffset = currentBodyPos.multiply(-transitionProgress);
-				}
-
 				// Draw orbit segments
 				for (let i = 0; i <= segments; i++) {
 					const orbitAngle = (i / segments) * Math.PI * 2;
-					const x = Math.cos(orbitAngle) * distance * simulationState.scale;
-					const z = Math.sin(orbitAngle) * distance * simulationState.scale;
+					// Apply scale to orbit distance
+					const scaledDistance = distance * simulationState.scale;
+					const x = Math.cos(orbitAngle) * scaledDistance;
+					const z = Math.sin(orbitAngle) * scaledDistance;
 
-					// Apply orbital simulationState.inclination (rotate around x-axis)
+					// Apply orbital inclination (rotate around x-axis)
 					const incRad = (orbitalInclination * Math.PI) / 180;
 					const y = z * Math.sin(incRad);
 					const zInclined = z * Math.cos(incRad);
 
+					// Add parent body position if this is a moon orbit
+					let worldX = x;
+					let worldY = y;
+					let worldZ = zInclined;
+					if (parentBody3DPos) {
+						worldX += parentBody3DPos.x;
+						worldY += parentBody3DPos.y;
+						worldZ += parentBody3DPos.z;
+					}
+
 					const screenPos = project3DTo2D(
-						x,
-						y,
-						zInclined,
+						worldX,
+						worldY,
+						worldZ,
 						simulationState.inclination,
 						simulationState.rotation,
+						simulationState.centerOffset,
 					);
-					orbitPath.add(centerPosition.add(screenPos).add(orbitCenterOffset));
+					orbitPath.add(center.add(screenPos));
 				}
 
 				orbitPath.closed = true;
@@ -632,7 +975,7 @@
 					orbitRadius, // number - orbit radius on screen (for label visibility check)
 					opacity = 1, // number - opacity (for fade effects)
 					showLabel = true, // boolean - whether to show label
-					labelSuffix = "", // string - suffix for label (e.g., "(-10x)")
+					isScaledDown = false, // boolean - whether body is scaled down
 					strokeWidth = 0.5, // number - border stroke width
 				} = config;
 
@@ -714,7 +1057,7 @@
 							position: position,
 							startRadius: currentLabelRadius,
 							name: name,
-							labelSuffix: labelSuffix,
+							isScaledDown: isScaledDown,
 							bodyType: bodyType,
 							opacity: opacity,
 							targetGroup: targetGroup,
@@ -731,80 +1074,66 @@
 				moonGroup.removeChildren();
 				clickAreaGroup.removeChildren();
 
-				if (simulationState.viewMode === "solar-system") {
-					// Redraw sun
-					const sun = drawSun();
-					sun.opacity = fadeOpacity;
+				// Draw sun if visible
+				const sunState = celestialBodyStates.get("Sun");
+				if (sunState && sunState.visible) {
+					// Sun is at origin in 3D space
+					const sunPos3D = { x: 0, y: 0, z: 0 };
+					const sunScreenPos = project3DTo2D(
+						sunPos3D.x,
+						sunPos3D.y,
+						sunPos3D.z,
+						simulationState.inclination,
+						simulationState.rotation,
+						simulationState.centerOffset,
+					);
+
+					const sunPos = center.add(sunScreenPos);
+					const minSunSize = 3;
+					const scaledSunSize = Math.max(
+						sunData.size * simulationState.scale,
+						minSunSize,
+					);
+					const sun = new paper.Path.Circle(sunPos, scaledSunSize);
+					sun.fillColor = sunData.color;
+					sun.strokeColor = sunData.strokeColor;
+					sun.strokeWidth = 2;
+					sun.opacity = sunState.opacity;
 					planetGroup.addChild(sun);
 				}
 
 				planetsData.forEach((planet, planetIndex) => {
-					// Calculate orbital position using unified function
-					const orbitalData = calculateOrbitalPosition({
-						time: time,
-						period: planet.period,
-						angle: planet.angle,
-						distance: planet.distance,
-						scale: simulationState.scale,
-						orbitalInclination: planet.orbitalInclination,
-						inclination: simulationState.inclination,
-					});
+					// Check if planet is visible
+					const planetState = celestialBodyStates.get(planet.name);
+					if (!planetState || !planetState.visible) {
+						return; // Skip invisible planets
+					}
 
-					let planetPos = center.add(orbitalData.screenPos);
+					// Calculate orbital position using new system
+					const orbitalData = calculateOrbitalPosition(planet);
+					const planetPos = center.add(orbitalData.screenPos);
 
 					// Calculate orbit radius on screen
 					const orbitRadiusOnScreen = orbitalData.scaledDistance;
 
-					// Store selected planet's initial position
-					if (
-						selectedPlanet === planet &&
-						transitionProgress === 0 &&
-						simulationState.viewMode !== "planet-moons"
-					) {
-						selectedPlanetPosition = planetPos.clone();
-					}
-
-					// Apply planet offset with transition animation
-					if (
-						selectedPlanet === planet &&
-						(simulationState.viewMode === "planet-moons" ||
-							transitionProgress > 0)
-					) {
-						// Interpolate position from original to center
-						const startPos = selectedPlanetPosition || planetPos;
-						planetPos = startPos
-							.multiply(1 - transitionProgress)
-							.add(center.multiply(transitionProgress));
-					} else if (
-						simulationState.viewMode === "planet-moons" &&
-						selectedPlanet !== planet
-					) {
-						// Skip rendering other planets in moon view
-						return;
-					}
-
 					// Draw planet with scaled size (scales down with zoom out, but has minimum)
 					const minSize = 2; // Minimum planet size in pixels
 					let effectiveSize = planet.size;
+					let isScaledDown = false;
 
-					// Calculate target size for moon view
-					const targetSize = planet.size > 5 ? planet.size / 10 : planet.size;
+					// Check if this is the centered body in a moon view (reuse planetState from above)
+					if (planetState.isCenter && planet.moons && planet.moons.length > 0) {
+						// Find the smallest moon orbit
+						const smallestMoonOrbit = Math.min(
+							...planet.moons.map((m) => m.distance * simulationState.scale),
+						);
+						const currentPlanetSize = planet.size * simulationState.scale;
 
-					// Interpolate size during transition if this is the selected planet
-					if (
-						selectedPlanet === planet &&
-						transitionProgress > 0 &&
-						transitionProgress < 1
-					) {
-						effectiveSize =
-							planet.size * (1 - transitionProgress) +
-							targetSize * transitionProgress;
-					} else if (
-						simulationState.viewMode === "planet-moons" &&
-						selectedPlanet === planet &&
-						planet.size > 5
-					) {
-						effectiveSize = planet.size / 10;
+						// If planet is larger than smallest moon orbit, scale it down 10x
+						if (currentPlanetSize > smallestMoonOrbit) {
+							effectiveSize = planet.size / 10;
+							isScaledDown = true;
+						}
 					}
 
 					const scaledSize = Math.max(
@@ -812,17 +1141,14 @@
 						minSize,
 					);
 
-					// Determine label suffix
-					const labelSuffix =
-						simulationState.viewMode === "planet-moons" &&
-						selectedPlanet === planet &&
-						planet.size > 5
-							? " (-10x)"
-							: "";
-
-					// Calculate opacity
-					const planetOpacity =
-						selectedPlanet && selectedPlanet !== planet ? fadeOpacity : 1;
+					// Calculate opacity (fade out non-center bodies)
+					let planetOpacity = 1.0;
+					if (
+						simulationState.centerBody &&
+						simulationState.centerBody.body !== planet
+					) {
+						planetOpacity = 0.3; // Dim planets that aren't the center
+					}
 
 					// Draw the planet using the unified function
 					drawCelestialBody({
@@ -833,52 +1159,53 @@
 						bodyType: "planet",
 						bodyIndex: planetIndex,
 						orbitRadius: orbitRadiusOnScreen,
-						opacity: planetOpacity,
+						opacity: planetState.opacity,
 						showLabel: simulationState.showLabels,
-						labelSuffix: labelSuffix,
+						isScaledDown: isScaledDown,
 						strokeWidth: 0.5,
 					});
 				});
 
-				// Render moons if in moon view mode
-				if (simulationState.viewMode === "planet-moons" && selectedPlanet) {
-					renderMoons(selectedPlanet, center);
-				}
+				// Render moons for all planets
+				planetsData.forEach((planet) => {
+					if (planet.moons && planet.moons.length > 0) {
+						renderMoons(planet);
+					}
+				});
 			}
 
 			// Render moons around a planet
-			function renderMoons(planet, planetPos) {
+			function renderMoons(planet) {
 				if (!planet.moons || planet.moons.length === 0) return;
 
-				planet.moons.forEach((moon) => {
-					// Calculate orbital position using unified function
-					const orbitalData = calculateOrbitalPosition({
-						time: time,
-						period: moon.period,
-						angle: moon.angle,
-						distance: moon.distance,
-						scale: simulationState.scale,
-						orbitalInclination: moon.orbitalInclination,
-						inclination: simulationState.inclination,
-					});
+				// Get planet's 3D position
+				const planet3DPos = getCelestialBody3DPosition(planet);
 
-					const moonPos = planetPos.add(orbitalData.screenPos);
+				planet.moons.forEach((moon) => {
+					// Check if moon is visible first
+					const moonState = celestialBodyStates.get(moon.name);
+					if (!moonState || !moonState.visible) {
+						return; // Skip invisible moons
+					}
+
+					// Calculate moon orbital position (includes parent planet position)
+					const orbitalData = calculateOrbitalPosition(moon, planet);
+					const moonPos = center.add(orbitalData.screenPos);
 
 					// Calculate orbit radius on screen for this moon
 					const moonOrbitRadiusOnScreen = orbitalData.scaledDistance;
 
-					// Draw moon orbit using unified function
-					if (simulationState.showOrbits) {
+					// Draw moon orbit if visible
+					if (simulationState.showOrbits && moonState.orbitVisible) {
 						drawOrbitPath({
-							centerPosition: planetPos,
 							distance: moon.distance,
 							scale: simulationState.scale,
 							color: moon.color,
 							orbitalInclination: moon.orbitalInclination,
-							inclination: simulationState.inclination,
+							parentBody3DPos: planet3DPos,
 							segments: 50,
 							strokeWidth: 0.5,
-							alpha: 0.4,
+							alpha: 0.4 * moonState.orbitOpacity, // Apply orbit opacity
 							group: moonGroup,
 						});
 					}
@@ -899,9 +1226,9 @@
 						bodyType: "moon",
 						moonName: moon.name,
 						orbitRadius: moonOrbitRadiusOnScreen,
-						opacity: 1,
+						opacity: moonState.opacity,
 						showLabel: simulationState.showLabels,
-						labelSuffix: "",
+						isScaledDown: false,
 						strokeWidth: 0.3,
 					});
 				});
@@ -909,14 +1236,27 @@
 
 			// Animation loop
 			function animate() {
+				// Update body states (visibility, opacity, fade transitions)
+				const statesChanging = updateBodyStates();
+
+				// Update center offset based on current/target center bodies
+				updateCenterOffset();
+
 				// Pause rotation when hovering over any celestial body
 				const isHovering = hoveredClickArea !== null;
 
-				if (!simulationState.isPaused && !isHovering) {
+				// Redraw if: time advancing, hovering, animations active, or states changing
+				const shouldUpdate = !simulationState.isPaused && !isHovering;
+				const needsRedraw =
+					isHovering || bodyHoverStates.size > 0 || statesChanging;
+
+				if (shouldUpdate) {
 					time += simulationState.timeSpeed * 0.5;
+					drawOrbits();
 					updatePlanets();
-				} else if (isHovering || bodyHoverStates.size > 0) {
-					// Update when hovering or when there are active hover animations
+				} else if (needsRedraw) {
+					// Update when hovering, animations active, or states changing
+					drawOrbits();
 					updatePlanets();
 				}
 			}
@@ -924,6 +1264,7 @@
 			// Initialize
 			function init() {
 				time = 0;
+				initializeBodyStates(); // Initialize celestial body states
 				drawAxisLines();
 				drawOrbits();
 				updatePlanets();
@@ -944,7 +1285,7 @@
 				callbacks: {
 					drawOrbits,
 					updatePlanets,
-					transitionToSolarSystem,
+					setCenterBody,
 				},
 			});
 
@@ -1337,14 +1678,14 @@
 				isDragging = false;
 			});
 
-			// Handle canvas click for planet selection
+			// Handle canvas click for celestial body selection
 			function handleCanvasClick(event) {
 				const rect = canvas.getBoundingClientRect();
 				const x = event.clientX - rect.left;
 				const y = event.clientY - rect.top;
 				const clickPoint = new paper.Point(x, y);
 
-				// Hit test to find clicked planet or click area
+				// Hit test to find clicked celestial body or click area
 				const hitResult = paper.project.hitTest(clickPoint, {
 					fill: true,
 					stroke: true,
@@ -1364,19 +1705,38 @@
 					if (hoverState && hoverState.showComposition) {
 						// Cycle to next layer for both planets and moons
 						cycleLayer(bodyName);
-					} else if (
-						bodyType === "planet" &&
-						simulationState.viewMode === "solar-system"
-					) {
-						// Select planet and transition to moon view (only for planets in solar system view)
-						const planetIndex = hitResult.item.data.planetIndex;
-						const planet = planetsData[planetIndex];
-						selectedPlanet = planet;
-						transitionToPlanetView();
+					} else {
+						// Center the clicked body
+						if (bodyType === "planet") {
+							const planetIndex = hitResult.item.data.planetIndex;
+							const planet = planetsData[planetIndex];
+							setCenterBody(planet, null);
+						} else if (bodyType === "moon") {
+							// Find the moon and its parent planet
+							const moonName = hitResult.item.data.moonName;
+							let foundMoon = null;
+							let parentPlanet = null;
+
+							planetsData.forEach((planet) => {
+								if (planet.moons) {
+									const moon = planet.moons.find((m) => m.name === moonName);
+									if (moon) {
+										foundMoon = moon;
+										parentPlanet = planet;
+									}
+								}
+							});
+
+							if (foundMoon && parentPlanet) {
+								setCenterBody(foundMoon, parentPlanet);
+							}
+						}
 					}
-				} else if (simulationState.viewMode === "planet-moons") {
-					// Click on empty space in moon view - return to solar system
-					transitionToSolarSystem();
+				} else {
+					// Click on empty space - return to sun center
+					if (simulationState.centerBody) {
+						setCenterBody(null, null);
+					}
 				}
 			}
 
@@ -1408,59 +1768,6 @@
 
 				// Force redraw
 				updatePlanets();
-			}
-
-			// Transition to planet view (with fade animation)
-			function transitionToPlanetView() {
-				// Animate fade out and planet movement
-				const fadeSteps = 25;
-				const stepDuration = 20; // 20ms per step = 500ms total
-				let step = 0;
-				const fadeInterval = setInterval(() => {
-					step++;
-					const progress = step / fadeSteps;
-					fadeOpacity = 1 - progress;
-					transitionProgress = progress;
-					drawOrbits();
-					updatePlanets();
-
-					if (step >= fadeSteps) {
-						clearInterval(fadeInterval);
-						fadeOpacity = 0;
-						transitionProgress = 1;
-						// Switch to moon view AFTER fade completes
-						simulationState.viewMode = "planet-moons";
-						drawOrbits();
-						updatePlanets();
-					}
-				}, stepDuration);
-			}
-
-			// Transition back to solar system view
-			function transitionToSolarSystem() {
-				// Switch to solar system view immediately
-				simulationState.viewMode = "solar-system";
-				selectedPlanet = null;
-				selectedPlanetPosition = null;
-
-				// Animate fade in
-				const fadeSteps = 25;
-				const stepDuration = 20; // 20ms per step = 500ms total
-				let step = 0;
-				const fadeInterval = setInterval(() => {
-					step++;
-					const progress = step / fadeSteps;
-					fadeOpacity = progress;
-					transitionProgress = 1 - progress; // Reverse transition
-					drawOrbits();
-					updatePlanets();
-
-					if (step >= fadeSteps) {
-						clearInterval(fadeInterval);
-						fadeOpacity = 1.0;
-						transitionProgress = 0;
-					}
-				}, stepDuration);
 			}
 
 			// Start the simulation
