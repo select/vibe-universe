@@ -25,19 +25,25 @@ jobs:
 
       - name: Copy content to universe folder
         run: |
+          echo "=== Source repository contents ==="
+          ls -la
+
+          echo "=== Current universe folder contents ==="
+          ls -la target-repo/universe/ || echo "Universe folder doesn't exist yet"
+
           # Create universe directory if it doesn't exist
           mkdir -p target-repo/universe
 
-          # Remove old content (except .git)
-          find target-repo/universe -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          # Remove old content in universe folder
+          rm -rf target-repo/universe/*
+          rm -rf target-repo/universe/.[!.]*
 
           # Copy all content from source repo to universe folder
-          cp -r * target-repo/universe/ 2>/dev/null || true
-          cp -r .[!.]* target-repo/universe/ 2>/dev/null || true
+          # Use rsync for reliable copying with exclusions
+          rsync -av --exclude='target-repo' --exclude='.git' --exclude='.github' ./ target-repo/universe/
 
-          # Remove .git directory from copied content to avoid nested repos
-          rm -rf target-repo/universe/.git
-          rm -rf target-repo/universe/.github
+          echo "=== Universe folder contents after copy ==="
+          ls -la target-repo/universe/
 
       - name: Commit and push changes
         run: |
@@ -45,14 +51,20 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          ls -la .
+          echo "=== Git status ==="
+          git status
 
-          # Check if there are changes
-          if git diff --quiet && git diff --staged --quiet; then
+          # Add all changes
+          git add -A
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
             echo "No changes to commit"
             exit 0
           fi
 
-          git add .
+          echo "=== Changes to be committed ==="
+          git diff --staged --stat
+
           git commit -m "Deploy from vibe-universe repository - $(date +'%Y-%m-%d %H:%M:%S')"
           git push origin master
