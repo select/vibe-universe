@@ -25,46 +25,22 @@ jobs:
 
       - name: Copy content to universe folder
         run: |
-          echo "=== Source repository contents ==="
-          ls -la
-
-          echo "=== Current universe folder contents ==="
-          ls -la target-repo/universe/ || echo "Universe folder doesn't exist yet"
-
-          # Create universe directory if it doesn't exist
           mkdir -p target-repo/universe
-
-          # Remove old content in universe folder
           rm -rf target-repo/universe/*
           rm -rf target-repo/universe/.[!.]*
-
-          # Copy all content from source repo to universe folder
-          # Use rsync for reliable copying with exclusions
           rsync -av --exclude='target-repo' --exclude='.git' --exclude='.github' ./ target-repo/universe/
-
-          echo "=== Universe folder contents after copy ==="
-          ls -la target-repo/universe/
 
       - name: Commit and push changes
         run: |
           cd target-repo
           git config user.name "GitHub Actions Bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          echo "=== Git status ==="
-          git status
-
-          # Add all changes
           git add -A
 
-          # Check if there are changes to commit
           if git diff --staged --quiet; then
             echo "No changes to commit"
             exit 0
           fi
-
-          echo "=== Changes to be committed ==="
-          git diff --staged --stat
 
           git commit -m "Deploy from vibe-universe repository - $(date +'%Y-%m-%d %H:%M:%S')"
           git push origin master
