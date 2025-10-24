@@ -41,7 +41,7 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          # cd target-repo
+          cd target-repo
           git config user.name "GitHub Actions Bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
