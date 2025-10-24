@@ -4,6 +4,7 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Vibe Universe</title>
+		<link rel="stylesheet" href="./controls.css" />
 		<script type="text/javascript" src="./lib/paper-full.js"></script>
 		<script type="text/javascript" src="./lib/svg-export.js"></script>
 		<style>
@@ -19,196 +20,11 @@
 			}
 			canvas {
 				cursor: grab;
+				max-width: 100vw;
+				max-height: 100vh;
 			}
 			canvas:active {
 				cursor: grabbing;
-			}
-			.controls {
-				position: absolute;
-				top: 20px;
-				left: 20px;
-				color: white;
-				font-family: monospace;
-				z-index: 100;
-				background-color: rgba(0, 0, 0, 0.8);
-				padding: 15px;
-				border-radius: 5px;
-				max-width: 300px;
-			}
-			.control-group {
-				margin-bottom: 15px;
-			}
-			label {
-				display: block;
-				margin-bottom: 5px;
-				font-size: 12px;
-			}
-			input[type="range"] {
-				width: 200px;
-			}
-			.value {
-				display: inline-block;
-				min-width: 60px;
-				margin-left: 10px;
-			}
-			button {
-				background-color: #333;
-				color: white;
-				border: 1px solid #555;
-				padding: 8px 15px;
-				cursor: pointer;
-				font-family: monospace;
-				font-size: 12px;
-				margin-top: 5px;
-				border-radius: 3px;
-				width: 100%;
-			}
-			button:hover {
-				background-color: #444;
-			}
-			button:active {
-				background-color: #222;
-			}
-			.info {
-				position: absolute;
-				bottom: 20px;
-				right: 20px;
-				color: rgba(255, 255, 255, 0.7);
-				font-family: monospace;
-				font-size: 11px;
-				text-align: right;
-			}
-			.scale-indicator {
-				position: absolute;
-				top: 20px;
-				right: 20px;
-				color: white;
-				font-family: monospace;
-				font-size: 11px;
-				background-color: rgba(0, 0, 0, 0.8);
-				padding: 10px;
-				border-radius: 5px;
-				display: flex;
-				flex-direction: column;
-				align-items: flex-end;
-				gap: 15px;
-			}
-			.scale-item {
-				display: flex;
-				flex-direction: column;
-				align-items: flex-end;
-			}
-			.scale-label {
-				font-size: 9px;
-				color: rgba(255, 255, 255, 0.6);
-				margin-bottom: 2px;
-			}
-			.scale-line {
-				width: 100px;
-				height: 2px;
-				background-color: white;
-				margin-top: 5px;
-				margin-bottom: 3px;
-			}
-			#menuToggleWrapper {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100vw;
-				height: 100vh;
-				pointer-events: none;
-				z-index: 1001;
-				display: none;
-			}
-			#menuToggle {
-				position: absolute;
-				bottom: 20px;
-				left: 20px;
-				width: 50px;
-				height: 50px;
-				background-color: rgba(0, 0, 0, 0.7);
-				border: 2px solid white;
-				border-radius: 50%;
-				cursor: pointer;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				pointer-events: auto;
-			}
-			#menuToggle span {
-				width: 24px;
-				height: 2px;
-				background-color: white;
-				display: block;
-				position: relative;
-				transition: all 0.3s ease;
-			}
-			#menuToggle span::before,
-			#menuToggle span::after {
-				content: "";
-				width: 24px;
-				height: 2px;
-				background-color: white;
-				position: absolute;
-				left: 0;
-				transition: all 0.3s ease;
-			}
-			#menuToggle span::before {
-				top: -8px;
-			}
-			#menuToggle span::after {
-				bottom: -8px;
-			}
-			#menuToggle.active span {
-				background-color: transparent;
-			}
-			#menuToggle.active span::before {
-				top: 0;
-				transform: rotate(45deg);
-			}
-			#menuToggle.active span::after {
-				bottom: 0;
-				transform: rotate(-45deg);
-			}
-
-			@media (max-width: 768px) {
-				.controls {
-					position: fixed;
-					top: 0;
-					left: -100%;
-					width: 80%;
-					max-width: 300px;
-					height: 100vh;
-					max-height: 100vh;
-					overflow-y: auto;
-					border-radius: 0;
-					transition: left 0.3s ease;
-					z-index: 999;
-				}
-				.controls.open {
-					left: 0;
-				}
-				#menuToggleWrapper {
-					display: block;
-				}
-				.scale-indicator {
-					top: 10px;
-					right: 10px;
-					font-size: 10px;
-					padding: 8px;
-				}
-				.scale-line {
-					width: 80px;
-				}
-				.info {
-					bottom: 10px;
-					right: 10px;
-					font-size: 9px;
-				}
-				canvas {
-					max-width: 100vw;
-					max-height: 100vh;
-				}
 			}
 		</style>
 	</head>
@@ -351,35 +167,31 @@
 			import { celestialBodyCompositions } from "./planet-composition.js";
 			import { getFormulaColor } from "./formula-registry.js";
 			import { formatFormulaWithSubscripts } from "./lib/formula-utils.js";
-			import { planetsData } from "./planets-data.js";
+			import { planetsData, sunData } from "./planets-data.js";
+			import { Controls } from "./controls.js";
 
 			paper.setup(document.getElementById("myCanvas"));
 			const center = paper.view.center;
 
-			// Astronomical data (simplified)
-			// Orbital periods in Earth days, distances in AU (scaled for visualization)
-			const sunData = {
-				size: (109.2 / 20) * 5, // adjusted for display proportionality
-				color: "#FDB813",
-				strokeColor: "#F9A602",
+			// Simulation state - using object for shared state with Controls
+			const simulationState = {
+				timeSpeed: 1.0,
+				inclination: 60, // degrees (-90 to 90)
+				rotation: 0, // degrees (0 to 360) - view angle rotation around Y axis
+				scale: 1.0,
+				showOrbits: true,
+				showLabels: true,
+				showCompoundNames: false, // Show compound names instead of formulas in composition diagram
+				isPaused: false,
+				labelFontSize: 12, // Default font size for planet labels
+				viewMode: "solar-system", // 'solar-system' or 'planet-moons'
 			};
 
-			// Simulation state
-			let timeSpeed = 1.0;
-			let inclination = 60; // degrees (-90 to 90)
-			let rotation = 0; // degrees (0 to 360) - view angle rotation around Y axis
-			let scale = 1.0;
-			let showOrbits = true;
-			let showLabels = true;
-			let showCompoundNames = false; // Show compound names instead of formulas in composition diagram
-			let isPaused = false;
 			let time = 0;
-			let labelFontSize = 12; // Default font size for planet labels
 			const minOrbitRadiusForLabel = 70; // Minimum orbit radius (in pixels) to show labels and enable interactions
 
 			// Planet selection state
 			let selectedPlanet = null;
-			let viewMode = "solar-system"; // 'solar-system' or 'planet-moons'
 			let fadeOpacity = 1.0;
 			let planetOffset = new paper.Point(0, 0);
 			let transitionProgress = 0; // 0 = solar system, 1 = moon view
@@ -412,9 +224,9 @@
 				axisGroup.removeChildren();
 
 				// Skip axis lines in moon view mode
-				if (viewMode === "planet-moons") return;
+				if (simulationState.viewMode === "planet-moons") return;
 
-				const axisLength = 50 * scale; // Length of axis lines (even smaller)
+				const axisLength = 50 * simulationState.scale; // Length of axis lines (even smaller)
 
 				// X-axis (Red) - extends along the X direction
 				const xEnd3D = { x: axisLength, y: 0, z: 0 };
@@ -422,8 +234,8 @@
 					xEnd3D.x,
 					xEnd3D.y,
 					xEnd3D.z,
-					inclination,
-					rotation,
+					simulationState.inclination,
+					simulationState.rotation,
 				);
 				const xLine = new paper.Path.Line(center, center.add(xEndPos));
 				xLine.strokeColor = "#FF4444"; // Red
@@ -437,8 +249,8 @@
 					yEnd3D.x,
 					yEnd3D.y,
 					yEnd3D.z,
-					inclination,
-					rotation,
+					simulationState.inclination,
+					simulationState.rotation,
 				);
 				const yLine = new paper.Path.Line(center, center.add(yEndPos));
 				yLine.strokeColor = "#44FF44"; // Green
@@ -452,8 +264,8 @@
 					zEnd3D.x,
 					zEnd3D.y,
 					zEnd3D.z,
-					inclination,
-					rotation,
+					simulationState.inclination,
+					simulationState.rotation,
 				);
 				const zLine = new paper.Path.Line(center, center.add(zEndPos));
 				zLine.strokeColor = "#4444FF"; // Blue
@@ -466,7 +278,7 @@
 				const xLabel = new paper.PointText(center.add(xLabelOffset));
 				xLabel.content = "X";
 				xLabel.fillColor = "#FF4444";
-				xLabel.fontSize = labelFontSize * 0.7;
+				xLabel.fontSize = simulationState.labelFontSize * 0.7;
 				xLabel.fontFamily = "monospace";
 				xLabel.fontWeight = "bold";
 				xLabel.justification = "center";
@@ -478,7 +290,7 @@
 				const yLabel = new paper.PointText(center.add(yLabelOffset));
 				yLabel.content = "Y";
 				yLabel.fillColor = "#44FF44";
-				yLabel.fontSize = labelFontSize * 0.7;
+				yLabel.fontSize = simulationState.labelFontSize * 0.7;
 				yLabel.fontFamily = "monospace";
 				yLabel.fontWeight = "bold";
 				yLabel.justification = "center";
@@ -490,7 +302,7 @@
 				const zLabel = new paper.PointText(center.add(zLabelOffset));
 				zLabel.content = "Z";
 				zLabel.fillColor = "#4444FF";
-				zLabel.fontSize = labelFontSize * 0.7;
+				zLabel.fontSize = simulationState.labelFontSize * 0.7;
 				zLabel.fontFamily = "monospace";
 				zLabel.fontWeight = "bold";
 				zLabel.justification = "center";
@@ -502,10 +314,10 @@
 			function drawOrbits() {
 				orbitGroup.removeChildren();
 
-				if (!showOrbits) return;
+				if (!simulationState.showOrbits) return;
 
 				// Skip planet orbits in moon view mode
-				if (viewMode === "planet-moons") return;
+				if (simulationState.viewMode === "planet-moons") return;
 
 				planetsData.forEach((planet) => {
 					// Skip non-selected planet orbits when fading
@@ -521,10 +333,10 @@
 					drawOrbitPath({
 						centerPosition: center,
 						distance: planet.distance,
-						scale: scale,
+						scale: simulationState.scale,
 						color: planet.color,
 						orbitalInclination: planet.orbitalInclination,
-						inclination: inclination,
+						inclination: simulationState.inclination,
 						time: time,
 						period: planet.period,
 						angle: planet.angle,
@@ -541,63 +353,15 @@
 			// Draw the sun
 			function drawSun() {
 				const minSunSize = 3;
-				const scaledSunSize = Math.max(sunData.size * scale, minSunSize);
+				const scaledSunSize = Math.max(
+					sunData.size * simulationState.scale,
+					minSunSize,
+				);
 				const sun = new paper.Path.Circle(center, scaledSunSize);
 				sun.fillColor = sunData.color;
 				sun.strokeColor = sunData.strokeColor;
 				sun.strokeWidth = 2;
 				return sun;
-			}
-
-			// Helper function to format distance
-			function formatDistance(distanceKm) {
-				if (distanceKm >= 1000000000) {
-					return (distanceKm / 1000000000).toFixed(1) + " billion km";
-				} else if (distanceKm >= 1000000) {
-					return (distanceKm / 1000000).toFixed(1) + " million km";
-				} else if (distanceKm >= 1000) {
-					return (distanceKm / 1000).toFixed(0) + " thousand km";
-				} else {
-					return distanceKm.toFixed(0) + " km";
-				}
-			}
-
-			// Update orbital distance scale indicator
-			function updateOrbitScaleIndicator() {
-				// 1 AU = 149.6 million km
-				// In our simulation: distance unit is in AU * 100
-				// Earth is at distance: 100 (= 1 AU)
-				// The scale line is 100px wide
-				const scaleLineWidth = 100; // pixels
-				const auToKm = 149600000; // 1 AU in km
-				const distanceUnitsPerAU = 100; // simulation units per AU
-
-				// At scale=1.0, 100 pixels represents 1 AU worth of distance units
-				const distanceKm =
-					(scaleLineWidth / (distanceUnitsPerAU * scale)) * auToKm;
-
-				orbitScaleText.textContent = formatDistance(distanceKm);
-			}
-
-			// Update planet/moon size scale indicator
-			function updatePlanetScaleIndicator() {
-				// Earth's diameter: 12,756 km
-				// Earth's size in simulation: 5 pixels (diameter)
-				// The scale line is 100px wide
-				// Scale is affected by zoom: actual size = size * scale
-				const scaleLineWidth = 100; // pixels
-				const earthDiameterKm = 12756;
-				const earthSizePixels = 5;
-				const kmPerPixel = earthDiameterKm / (earthSizePixels * 2 * scale);
-				const distanceKm = scaleLineWidth * kmPerPixel;
-
-				planetScaleText.textContent = formatDistance(distanceKm);
-			}
-
-			// Update both scale indicators
-			function updateScaleIndicators() {
-				updateOrbitScaleIndicator();
-				updatePlanetScaleIndicator();
 			}
 
 			// Draw label with angled connector line for celestial body
@@ -654,7 +418,9 @@
 				label.content = name + labelSuffix;
 				label.fillColor = "white";
 				label.fontSize =
-					bodyType === "planet" ? labelFontSize : labelFontSize * 0.8;
+					bodyType === "planet"
+						? simulationState.labelFontSize
+						: simulationState.labelFontSize * 0.8;
 				label.fontFamily = "monospace";
 				label.justification = "left";
 				label.opacity = opacity;
@@ -677,7 +443,7 @@
 						const moonLabel = new paper.PointText(moonLabelPos);
 						moonLabel.content = moonCount + " ⏾";
 						moonLabel.fillColor = new paper.Color(0.5, 0.5, 0.5); // Gray color
-						moonLabel.fontSize = labelFontSize * 0.8;
+						moonLabel.fontSize = simulationState.labelFontSize * 0.8;
 						moonLabel.fontFamily = "monospace";
 						moonLabel.justification = "left";
 						moonLabel.opacity = opacity;
@@ -705,7 +471,10 @@
 						const symbol = layerSymbols[currentLayer] || layerSymbols.default;
 
 						// Position below and slightly right of the label text
-						const layerOffset = new paper.Point(10, labelFontSize + 5);
+						const layerOffset = new paper.Point(
+							10,
+							simulationState.labelFontSize + 5,
+						);
 						const layerPos = segment2End.add(labelOffset).add(layerOffset);
 
 						// Draw symbol and layer name combined
@@ -714,7 +483,7 @@
 							currentLayer.charAt(0).toUpperCase() + currentLayer.slice(1);
 						layerText.content = symbol + " " + layerName;
 						layerText.fillColor = "#999999";
-						layerText.fontSize = labelFontSize * 0.8;
+						layerText.fontSize = simulationState.labelFontSize * 0.8;
 						layerText.fontFamily = "monospace";
 						layerText.justification = "left";
 						layerText.opacity = opacity;
@@ -738,18 +507,24 @@
 				// Calculate orbital angle based on time and period
 				const currentAngle = angle + (time / period) * Math.PI * 2;
 
-				// Calculate 3D position (apply scale)
-				const scaledDistance = distance * scale;
+				// Calculate 3D position (apply simulationState.scale)
+				const scaledDistance = distance * simulationState.scale;
 				const x = Math.cos(currentAngle) * scaledDistance;
 				const z = Math.sin(currentAngle) * scaledDistance;
 
-				// Apply orbital inclination (rotate around x-axis)
+				// Apply orbital simulationState.inclination (rotate around x-axis)
 				const incRad = (orbitalInclination * Math.PI) / 180;
 				const y = z * Math.sin(incRad);
 				const zInclined = z * Math.cos(incRad);
 
 				// Project to 2D
-				const screenPos = project3DTo2D(x, y, zInclined, inclination, rotation);
+				const screenPos = project3DTo2D(
+					x,
+					y,
+					zInclined,
+					simulationState.inclination,
+					simulationState.rotation,
+				);
 
 				return {
 					screenPos: screenPos, // paper.Point - 2D projected position
@@ -777,7 +552,7 @@
 					group, // paper.Group - group to add orbit to
 				} = config;
 
-				const orbitRadiusOnScreen = distance * scale;
+				const orbitRadiusOnScreen = distance * simulationState.scale;
 
 				// Hide orbits larger than the screen
 				const maxVisibleRadius =
@@ -802,8 +577,8 @@
 				) {
 					// Calculate where the body currently is in its orbit
 					const currentAngle = angle + (time / period) * Math.PI * 2;
-					const x = Math.cos(currentAngle) * distance * scale;
-					const z = Math.sin(currentAngle) * distance * scale;
+					const x = Math.cos(currentAngle) * distance * simulationState.scale;
+					const z = Math.sin(currentAngle) * distance * simulationState.scale;
 					const incRad = (orbitalInclination * Math.PI) / 180;
 					const y = z * Math.sin(incRad);
 					const zInclined = z * Math.cos(incRad);
@@ -811,8 +586,8 @@
 						x,
 						y,
 						zInclined,
-						inclination,
-						rotation,
+						simulationState.inclination,
+						simulationState.rotation,
 					);
 
 					// Offset orbit so body position moves toward center
@@ -822,10 +597,10 @@
 				// Draw orbit segments
 				for (let i = 0; i <= segments; i++) {
 					const orbitAngle = (i / segments) * Math.PI * 2;
-					const x = Math.cos(orbitAngle) * distance * scale;
-					const z = Math.sin(orbitAngle) * distance * scale;
+					const x = Math.cos(orbitAngle) * distance * simulationState.scale;
+					const z = Math.sin(orbitAngle) * distance * simulationState.scale;
 
-					// Apply orbital inclination (rotate around x-axis)
+					// Apply orbital simulationState.inclination (rotate around x-axis)
 					const incRad = (orbitalInclination * Math.PI) / 180;
 					const y = z * Math.sin(incRad);
 					const zInclined = z * Math.cos(incRad);
@@ -834,8 +609,8 @@
 						x,
 						y,
 						zInclined,
-						inclination,
-						rotation,
+						simulationState.inclination,
+						simulationState.rotation,
 					);
 					orbitPath.add(centerPosition.add(screenPos).add(orbitCenterOffset));
 				}
@@ -956,7 +731,7 @@
 				moonGroup.removeChildren();
 				clickAreaGroup.removeChildren();
 
-				if (viewMode === "solar-system") {
+				if (simulationState.viewMode === "solar-system") {
 					// Redraw sun
 					const sun = drawSun();
 					sun.opacity = fadeOpacity;
@@ -970,9 +745,9 @@
 						period: planet.period,
 						angle: planet.angle,
 						distance: planet.distance,
-						scale: scale,
+						scale: simulationState.scale,
 						orbitalInclination: planet.orbitalInclination,
-						inclination: inclination,
+						inclination: simulationState.inclination,
 					});
 
 					let planetPos = center.add(orbitalData.screenPos);
@@ -984,7 +759,7 @@
 					if (
 						selectedPlanet === planet &&
 						transitionProgress === 0 &&
-						viewMode !== "planet-moons"
+						simulationState.viewMode !== "planet-moons"
 					) {
 						selectedPlanetPosition = planetPos.clone();
 					}
@@ -992,14 +767,18 @@
 					// Apply planet offset with transition animation
 					if (
 						selectedPlanet === planet &&
-						(viewMode === "planet-moons" || transitionProgress > 0)
+						(simulationState.viewMode === "planet-moons" ||
+							transitionProgress > 0)
 					) {
 						// Interpolate position from original to center
 						const startPos = selectedPlanetPosition || planetPos;
 						planetPos = startPos
 							.multiply(1 - transitionProgress)
 							.add(center.multiply(transitionProgress));
-					} else if (viewMode === "planet-moons" && selectedPlanet !== planet) {
+					} else if (
+						simulationState.viewMode === "planet-moons" &&
+						selectedPlanet !== planet
+					) {
 						// Skip rendering other planets in moon view
 						return;
 					}
@@ -1021,18 +800,21 @@
 							planet.size * (1 - transitionProgress) +
 							targetSize * transitionProgress;
 					} else if (
-						viewMode === "planet-moons" &&
+						simulationState.viewMode === "planet-moons" &&
 						selectedPlanet === planet &&
 						planet.size > 5
 					) {
 						effectiveSize = planet.size / 10;
 					}
 
-					const scaledSize = Math.max(effectiveSize * scale, minSize);
+					const scaledSize = Math.max(
+						effectiveSize * simulationState.scale,
+						minSize,
+					);
 
 					// Determine label suffix
 					const labelSuffix =
-						viewMode === "planet-moons" &&
+						simulationState.viewMode === "planet-moons" &&
 						selectedPlanet === planet &&
 						planet.size > 5
 							? " (-10x)"
@@ -1052,14 +834,14 @@
 						bodyIndex: planetIndex,
 						orbitRadius: orbitRadiusOnScreen,
 						opacity: planetOpacity,
-						showLabel: showLabels,
+						showLabel: simulationState.showLabels,
 						labelSuffix: labelSuffix,
 						strokeWidth: 0.5,
 					});
 				});
 
 				// Render moons if in moon view mode
-				if (viewMode === "planet-moons" && selectedPlanet) {
+				if (simulationState.viewMode === "planet-moons" && selectedPlanet) {
 					renderMoons(selectedPlanet, center);
 				}
 			}
@@ -1075,9 +857,9 @@
 						period: moon.period,
 						angle: moon.angle,
 						distance: moon.distance,
-						scale: scale,
+						scale: simulationState.scale,
 						orbitalInclination: moon.orbitalInclination,
-						inclination: inclination,
+						inclination: simulationState.inclination,
 					});
 
 					const moonPos = planetPos.add(orbitalData.screenPos);
@@ -1086,14 +868,14 @@
 					const moonOrbitRadiusOnScreen = orbitalData.scaledDistance;
 
 					// Draw moon orbit using unified function
-					if (showOrbits) {
+					if (simulationState.showOrbits) {
 						drawOrbitPath({
 							centerPosition: planetPos,
 							distance: moon.distance,
-							scale: scale,
+							scale: simulationState.scale,
 							color: moon.color,
 							orbitalInclination: moon.orbitalInclination,
-							inclination: inclination,
+							inclination: simulationState.inclination,
 							segments: 50,
 							strokeWidth: 0.5,
 							alpha: 0.4,
@@ -1103,7 +885,10 @@
 
 					// Draw moon with scaled size (with minimum)
 					const minMoonSize = 1.5;
-					const scaledMoonSize = Math.max(moon.size * scale, minMoonSize);
+					const scaledMoonSize = Math.max(
+						moon.size * simulationState.scale,
+						minMoonSize,
+					);
 
 					// Draw the moon using the unified function
 					drawCelestialBody({
@@ -1115,7 +900,7 @@
 						moonName: moon.name,
 						orbitRadius: moonOrbitRadiusOnScreen,
 						opacity: 1,
-						showLabel: showLabels,
+						showLabel: simulationState.showLabels,
 						labelSuffix: "",
 						strokeWidth: 0.3,
 					});
@@ -1127,8 +912,8 @@
 				// Pause rotation when hovering over any celestial body
 				const isHovering = hoveredClickArea !== null;
 
-				if (!isPaused && !isHovering) {
-					time += timeSpeed * 0.5;
+				if (!simulationState.isPaused && !isHovering) {
+					time += simulationState.timeSpeed * 0.5;
 					updatePlanets();
 				} else if (isHovering || bodyHoverStates.size > 0) {
 					// Update when hovering or when there are active hover animations
@@ -1142,7 +927,7 @@
 				drawAxisLines();
 				drawOrbits();
 				updatePlanets();
-				updateScaleIndicators();
+				controlsInstance.updateScaleIndicators();
 			}
 
 			// Set up animation frame
@@ -1150,156 +935,17 @@
 				animate();
 			};
 
-			// UI Controls
-			const showOrbitsCheckbox = document.getElementById("showOrbits");
-			const showLabelsCheckbox = document.getElementById("showLabels");
-			const showCompoundNamesCheckbox =
-				document.getElementById("showCompoundNames");
-			const pausePlayButton = document.getElementById("pausePlay");
-			const fontSizeSlider = document.getElementById("fontSizeSlider");
-
-			const timeSpeedValue = document.getElementById("timeSpeedValue");
-			const inclinationValue = document.getElementById("inclinationValue");
-			const rotationValue = document.getElementById("rotationValue");
-			const scaleValue = document.getElementById("scaleValue");
-			const fontSizeValue = document.getElementById("fontSizeValue");
-			const orbitScaleText = document.getElementById("orbitScaleText");
-			const planetScaleText = document.getElementById("planetScaleText");
-
-			showOrbitsCheckbox.addEventListener("change", () => {
-				showOrbits = showOrbitsCheckbox.checked;
-				drawOrbits();
-			});
-
-			showLabelsCheckbox.addEventListener("change", () => {
-				showLabels = showLabelsCheckbox.checked;
-				updatePlanets();
-			});
-
-			showCompoundNamesCheckbox.addEventListener("change", () => {
-				showCompoundNames = showCompoundNamesCheckbox.checked;
-				updatePlanets();
-			});
-
-			fontSizeSlider.addEventListener("input", () => {
-				labelFontSize = parseInt(fontSizeSlider.value);
-				fontSizeValue.textContent = labelFontSize + "px";
-				updatePlanets();
-			});
-
-			function togglePause() {
-				isPaused = !isPaused;
-				pausePlayButton.textContent = isPaused ? "Play" : "Pause";
-			}
-
-			pausePlayButton.addEventListener("click", togglePause);
-
 			// Initialize SVG export with 'd' key
 			SvgExport.initSvgExport(paper.project);
 
-			// Keyboard controls
-			document.addEventListener("keydown", (event) => {
-				// Space bar to toggle pause
-				if (event.code === "Space" || event.key === " ") {
-					event.preventDefault(); // Prevent page scroll
-					togglePause();
-				}
-			});
-
-			// Mouse wheel zoom and time speed control
-			const canvas = document.getElementById("myCanvas");
-			let virtualZoomSlider = 50; // Virtual slider value (0-100)
-			let virtualTimeSlider = 55; // Virtual time slider (0-100, 55 ≈ 1.0x)
-
-			canvas.addEventListener("wheel", (event) => {
-				event.preventDefault();
-
-				// Check if scrolling horizontally (shift key + wheel, or horizontal trackpad scroll)
-				const isHorizontal =
-					event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY);
-
-				if (isHorizontal) {
-					// Horizontal scroll = adjust time speed
-					const timeSpeedAdjust = 0.5;
-					const delta = event.deltaX !== 0 ? event.deltaX : event.deltaY;
-
-					if (delta < 0) {
-						// Scroll left = slow down time
-						virtualTimeSlider = Math.max(
-							0,
-							virtualTimeSlider - timeSpeedAdjust,
-						);
-					} else {
-						// Scroll right = speed up time
-						virtualTimeSlider = Math.min(
-							100,
-							virtualTimeSlider + timeSpeedAdjust,
-						);
-					}
-
-					// Convert to logarithmic scale: range from very slow to fast
-					// Center around 55 = 1.0x
-					// Formula: timeSpeed = 10^((value - 55) / 30)
-					// This gives: 0=0.001x, 55=1.0x, 100=31.6x (very fine control at slower speeds)
-					timeSpeed = Math.pow(10, (virtualTimeSlider - 55) / 30);
-
-					// Calculate real-world time scale
-					// At 60fps: frames_per_second * timeSpeed * 0.5 = simulation_days_per_real_second
-					// Earth takes 365 days to orbit in simulation
-					// Real Earth takes 365 days = 365 * 24 * 60 * 60 = 31,536,000 seconds
-					// Simulation: 365 days / (60 * timeSpeed * 0.5) = real seconds for one Earth orbit
-					// Real-world multiplier = real_seconds_for_orbit / simulation_seconds_for_orbit
-					const framesPerSecond = 60;
-					const simulationDaysPerRealSecond = framesPerSecond * timeSpeed * 0.5;
-					const earthPeriodDays = 365;
-					const earthPeriodRealSeconds = 365 * 24 * 60 * 60; // 31,536,000 seconds
-					const simulationSecondsForEarthOrbit =
-						earthPeriodDays / simulationDaysPerRealSecond;
-					const realTimeMultiplier =
-						earthPeriodRealSeconds / simulationSecondsForEarthOrbit;
-
-					// Format display
-					let displayText;
-					if (realTimeMultiplier >= 1000000) {
-						displayText = (realTimeMultiplier / 1000000).toFixed(1) + "M×";
-					} else if (realTimeMultiplier >= 1000) {
-						displayText = (realTimeMultiplier / 1000).toFixed(1) + "K×";
-					} else {
-						displayText = realTimeMultiplier.toFixed(0) + "×";
-					}
-
-					// Update display
-					timeSpeedValue.textContent = displayText;
-				} else {
-					// Vertical scroll = adjust zoom
-					const zoomSpeed = 0.5; // Smaller step for smoother zooming
-					const previousScale = scale;
-
-					if (event.deltaY < 0) {
-						// Scroll up = zoom in (decrease slider value)
-						virtualZoomSlider = Math.max(0, virtualZoomSlider - zoomSpeed);
-					} else {
-						// Scroll down = zoom out (increase slider value)
-						virtualZoomSlider = Math.min(100, virtualZoomSlider + zoomSpeed);
-					}
-
-					// Update scale
-					scale = Math.pow(10, (50 - virtualZoomSlider) / 25);
-					scaleValue.textContent = scale.toFixed(2) + "x";
-					updateScaleIndicators();
-
-					// Auto-exit moon view ONLY when zooming out (not in) and crossing below 0.5
-					if (
-						viewMode === "planet-moons" &&
-						scale < 0.5 &&
-						scale < previousScale
-					) {
-						transitionToSolarSystem();
-					}
-
-					drawOrbits();
-					updatePlanets();
-				}
+			// Initialize Controls with shared state object
+			const controlsInstance = new Controls({
+				state: simulationState, // Pass the object reference, not copies
+				callbacks: {
+					drawOrbits,
+					updatePlanets,
+					transitionToSolarSystem,
+				},
 			});
 
 			// Animate radius change with smooth transition (state-based)
@@ -1461,7 +1107,8 @@
 							const segMidAngle = (seg.startAngle + seg.endAngle) / 2;
 
 							// Position label outside the circle (15px beyond the click circle)
-							const labelRadius = innerRadius + labelFontSize + 5;
+							const labelRadius =
+								innerRadius + simulationState.labelFontSize + 5;
 							const labelX = centerPos.x + Math.cos(segMidAngle) * labelRadius;
 							const labelY = centerPos.y + Math.sin(segMidAngle) * labelRadius;
 
@@ -1474,11 +1121,11 @@
 									new paper.Point(labelX, labelY),
 								);
 								// Use compound name if option is enabled, otherwise use formula
-								formulaLabel.content = showCompoundNames
+								formulaLabel.content = simulationState.showCompoundNames
 									? compound.compound
 									: formatFormulaWithSubscripts(compound.formula);
 								formulaLabel.fillColor = seg.color;
-								formulaLabel.fontSize = labelFontSize * 0.8;
+								formulaLabel.fontSize = simulationState.labelFontSize * 0.8;
 								formulaLabel.fontFamily = "monospace";
 								formulaLabel.justification = "center";
 								formulaLabel.opacity = Math.min(drawProgress, 1);
@@ -1532,11 +1179,14 @@
 				return angle;
 			}
 
-			// Snap points for inclination and rotation
+			// Snap points for simulationState.inclination and simulationState.rotation
 			const inclinationSnapPoints = [-60, -45, -30, 0, 30, 45, 60];
 			const rotationSnapPoints = [0, 45, 90, 135, 180, 225, 270, 315];
 
-			// Drag to change inclination and rotation, and click detection
+			// Get canvas element for drag controls
+			const canvas = document.getElementById("myCanvas");
+
+			// Drag to change simulationState.inclination and simulationState.rotation, and click detection
 			let isDragging = false;
 			let dragStartX = 0;
 			let dragStartY = 0;
@@ -1553,8 +1203,8 @@
 				isDragging = true;
 				dragStartX = event.clientX;
 				dragStartY = event.clientY;
-				dragStartInclination = inclination;
-				dragStartRotation = rotation;
+				dragStartInclination = simulationState.inclination;
+				dragStartRotation = simulationState.rotation;
 				dragMoved = false;
 			});
 
@@ -1636,7 +1286,7 @@
 
 				if (!isDragging) return;
 
-				// Calculate inclination and rotation changes based on mouse movement
+				// Calculate simulationState.inclination and simulationState.rotation changes based on mouse movement
 				const deltaX = event.clientX - dragStartX;
 				const deltaY = event.clientY - dragStartY;
 
@@ -1651,22 +1301,24 @@
 					-90,
 					Math.min(90, dragStartInclination + inclinationChange),
 				);
-				// Apply snapping
-				inclination = snapAngle(newInclination, inclinationSnapPoints);
+				// Apply snapping (this updates simulationState directly)
+				simulationState.inclination = snapAngle(
+					newInclination,
+					inclinationSnapPoints,
+				);
 
 				// Horizontal drag: adjust rotation (0 to 360 degrees, wrapping)
 				const rotationChange = -deltaX * 0.2; // Sensitivity factor (negative = drag right rotates clockwise)
 				let newRotation = (dragStartRotation + rotationChange + 360) % 360;
 				// Apply snapping (handle wraparound at 360/0)
-				rotation = snapAngle(newRotation, rotationSnapPoints);
+				simulationState.rotation = snapAngle(newRotation, rotationSnapPoints);
 				// Also check snap to 360 (same as 0)
 				if (Math.abs(newRotation - 360) <= 5) {
-					rotation = 0;
+					simulationState.rotation = 0;
 				}
 
 				// Update display
-				inclinationValue.textContent = Math.round(inclination) + "°";
-				rotationValue.textContent = Math.round(rotation) + "°";
+				controlsInstance.updateDisplays();
 
 				drawAxisLines();
 				drawOrbits();
@@ -1712,14 +1364,17 @@
 					if (hoverState && hoverState.showComposition) {
 						// Cycle to next layer for both planets and moons
 						cycleLayer(bodyName);
-					} else if (bodyType === "planet" && viewMode === "solar-system") {
+					} else if (
+						bodyType === "planet" &&
+						simulationState.viewMode === "solar-system"
+					) {
 						// Select planet and transition to moon view (only for planets in solar system view)
 						const planetIndex = hitResult.item.data.planetIndex;
 						const planet = planetsData[planetIndex];
 						selectedPlanet = planet;
 						transitionToPlanetView();
 					}
-				} else if (viewMode === "planet-moons") {
+				} else if (simulationState.viewMode === "planet-moons") {
 					// Click on empty space in moon view - return to solar system
 					transitionToSolarSystem();
 				}
@@ -1774,7 +1429,7 @@
 						fadeOpacity = 0;
 						transitionProgress = 1;
 						// Switch to moon view AFTER fade completes
-						viewMode = "planet-moons";
+						simulationState.viewMode = "planet-moons";
 						drawOrbits();
 						updatePlanets();
 					}
@@ -1784,7 +1439,7 @@
 			// Transition back to solar system view
 			function transitionToSolarSystem() {
 				// Switch to solar system view immediately
-				viewMode = "solar-system";
+				simulationState.viewMode = "solar-system";
 				selectedPlanet = null;
 				selectedPlanetPosition = null;
 
@@ -1810,25 +1465,6 @@
 
 			// Start the simulation
 			init();
-
-			// Mobile menu toggle
-			const menuToggle = document.getElementById("menuToggle");
-			const controls = document.querySelector(".controls");
-
-			menuToggle.addEventListener("click", () => {
-				controls.classList.toggle("open");
-				menuToggle.classList.toggle("active");
-			});
-
-			// Close menu when clicking outside on mobile
-			document.addEventListener("click", (e) => {
-				if (window.innerWidth <= 768) {
-					if (!controls.contains(e.target) && !menuToggle.contains(e.target)) {
-						controls.classList.remove("open");
-						menuToggle.classList.remove("active");
-					}
-				}
-			});
 		</script>
 	</body>
 </html>
