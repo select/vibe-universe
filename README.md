@@ -13,6 +13,7 @@ Live demo: [select.github.io/universe](https://select.github.io/universe)
 ## Features
 
 ### Interactive Solar System (`index.html`)
+
 - Real-time visualization of planets orbiting the sun
 - Accurate orbital periods and distances (scaled for visualization)
 - Interactive controls for:
@@ -25,6 +26,7 @@ Live demo: [select.github.io/universe](https://select.github.io/universe)
 - Scale indicators showing relative distances
 
 ### Planet Composition Tool (`planet-composition.js`)
+
 - Calculate and visualize planetary compositions
 - Chemical formula registry with unique color coding
 - Support for various minerals and compounds:
@@ -38,7 +40,9 @@ Live demo: [select.github.io/universe](https://select.github.io/universe)
 ### Utility Pages
 
 #### Formula Color Registry (`view-formula-colors.html`)
+
 Browse all available chemical formulas and their assigned colors, organized by category:
+
 - Metals
 - Silicates
 - Oxides
@@ -48,6 +52,7 @@ Browse all available chemical formulas and their assigned colors, organized by c
 - Atmospheric gases
 
 #### Planet Composition Examples (`example-planet-composition.html`)
+
 Interactive examples and documentation for using the planet composition API.
 
 ## Project Structure

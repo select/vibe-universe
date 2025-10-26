@@ -1,198 +1,323 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-age=1.0" />
-    <title>Planet Composition Usage Examples</title>
-    <style>
-      body {
-        background-color: #161616;
-        color: #e0e0e0;
-        font-family: "Courier New", monospace;
-        padding: 20px;
-        max-width: 1200px;
-        margin: 0 auto;
-      }
-      h1 {
-        color: #66bb6a;
-        border-bottom: 2px solid #66bb6a;
-        padding-bottom: 10px;
-      }
-      h2 {
-        color: #81c784;
-        margin-top: 30px;
-      }
-      h3 {
-        color: #a5d6a7;
-        margin-top: 20px;
-      }
-      .example {
-        background-color: #212121;
-        border-left: 4px solid #66bb6a;
-        padding: 15px;
-        margin: 15px 0;
-      }
-      .code {
-        background-color: #1a1a1a;
-        padding: 10px;
-        border-radius: 4px;
-        overflow-x: auto;
-        font-family: "Courier New", monospace;
-      }
-      .output {
-        margin-top: 10px;
-        padding: 10px;
-        background-color: #1b5e20;
-        border-radius: 4px;
-      }
-      .color-swatch {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 1px solid #fff;
-        margin-right: 8px;
-        vertical-align: middle;
-      }
-      .planet-name {
-        font-size: 1.3em;
-        font-weight: bold;
-        color: #ffd54f;
-        margin: 10px 0;
-      }
-      .layer {
-        background-color: #263238;
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 4px;
-      }
-      .layer-name {
-        font-weight: bold;
-        color: #4fc3f7;
-        margin-bottom: 8px;
-      }
-      .compound-item {
-        padding: 8px;
-        margin: 5px 0;
-        background-color: #1a1a1a;
-        border-radius: 4px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 15px 0;
-      }
-      th,
-      td {
-        padding: 10px;
-        text-align: left;
-        border-bottom: 1px solid #424242;
-      }
-      th {
-        background-color: #1a1a1a;
-        color: #66bb6a;
-      }
-      tr:hover {
-        background-color: #212121;
-      }
-      .bar {
-        height: 20px;
-        background: linear-gradient(90deg, #66bb6a 0%, #2e7d32 100%);
-        border-radius: 4px;
-        margin-top: 5px;
-      }
-      .comparison {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        margin: 15px 0;
-      }
-      .element-box {
-        background-color: #263238;
-        padding: 10px;
-        border-radius: 4px;
-      }
-      pre {
-        background-color: #0d0d0d;
-        padding: 10px;
-        border-radius: 4px;
-        overflow-x: auto;
-      }
-      .comparison-bars {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 5px 0;
-      }
-      .comparison-bar-container {
-        flex: 1;
-        height: 30px;
-        background-color: #1a1a1a;
-        border-radius: 4px;
-        position: relative;
-        overflow: hidden;
-      }
-      .comparison-bar-fill {
-        height: 100%;
-        border-radius: 4px;
-        transition: width 0.3s ease;
-      }
-      .comparison-label {
-        min-width: 60px;
-        text-align: right;
-        font-size: 14px;
-      }
-      .positive-diff {
-        color: #66bb6a;
-        font-weight: bold;
-      }
-      .negative-diff {
-        color: #ef5350;
-        font-weight: bold;
-      }
-      .comparison-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-        gap: 20px;
-        margin: 20px 0;
-      }
-      .comparison-card {
-        background-color: #263238;
-        padding: 15px;
-        border-radius: 8px;
-      }
-      .element-header {
-        font-size: 18px;
-        font-weight: bold;
-        color: #ffd54f;
-        margin-bottom: 10px;
-        border-bottom: 1px solid #424242;
-        padding-bottom: 5px;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Planet Composition Usage Examples</h1>
-    <p>
-      This page demonstrates all exported functions and objects from
-      <code>planet-composition.js</code>
-    </p>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<title>Planet Composition Usage Examples</title>
+		<style>
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				background-color: #161616;
+				color: #e0e0e0;
+				font-family: 'Courier New', monospace;
+				padding: 10px;
+				max-width: 1200px;
+				margin: 0 auto;
+				overflow-x: hidden;
+			}
+			h1 {
+				color: #66bb6a;
+				border-bottom: 2px solid #66bb6a;
+				padding-bottom: 10px;
+			}
+			h2 {
+				color: #81c784;
+				margin-top: 30px;
+			}
+			h3 {
+				color: #a5d6a7;
+				margin-top: 20px;
+			}
+			.example {
+				background-color: #212121;
+				border-left: 4px solid #66bb6a;
+				padding: 15px;
+				margin: 15px 0;
+			}
+			.code {
+				background-color: #1a1a1a;
+				padding: 10px;
+				border-radius: 4px;
+				overflow-x: auto;
+				font-family: 'Courier New', monospace;
+			}
+			.output {
+				margin-top: 10px;
+				padding: 10px;
+				background-color: #1b5e20;
+				border-radius: 4px;
+			}
+			.color-swatch {
+				display: inline-block;
+				width: 20px;
+				height: 20px;
+				border: 1px solid #fff;
+				margin-right: 8px;
+				vertical-align: middle;
+			}
+			.planet-name {
+				font-size: 1.3em;
+				font-weight: bold;
+				color: #ffd54f;
+				margin: 10px 0;
+			}
+			.layer {
+				background-color: #263238;
+				padding: 10px;
+				margin: 10px 0;
+				border-radius: 4px;
+			}
+			.layer-name {
+				font-weight: bold;
+				color: #4fc3f7;
+				margin-bottom: 8px;
+			}
+			.compound-item {
+				padding: 8px;
+				margin: 5px 0;
+				background-color: #1a1a1a;
+				border-radius: 4px;
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				margin: 15px 0;
+			}
+			th,
+			td {
+				padding: 10px;
+				text-align: left;
+				border-bottom: 1px solid #424242;
+			}
+			th {
+				background-color: #1a1a1a;
+				color: #66bb6a;
+			}
+			tr:hover {
+				background-color: #212121;
+			}
+			.bar {
+				height: 20px;
+				background: linear-gradient(90deg, #66bb6a 0%, #2e7d32 100%);
+				border-radius: 4px;
+				margin-top: 5px;
+			}
+			.comparison {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 15px;
+				margin: 15px 0;
+			}
+			.element-box {
+				background-color: #263238;
+				padding: 10px;
+				border-radius: 4px;
+			}
+			pre {
+				background-color: #0d0d0d;
+				padding: 10px;
+				border-radius: 4px;
+				overflow-x: auto;
+			}
+			.comparison-bars {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				margin: 5px 0;
+			}
+			.comparison-bar-container {
+				flex: 1;
+				height: 30px;
+				background-color: #1a1a1a;
+				border-radius: 4px;
+				position: relative;
+				overflow: hidden;
+			}
+			.comparison-bar-fill {
+				height: 100%;
+				border-radius: 4px;
+				transition: width 0.3s ease;
+			}
+			.comparison-label {
+				min-width: 60px;
+				text-align: right;
+				font-size: 14px;
+			}
+			.positive-diff {
+				color: #66bb6a;
+				font-weight: bold;
+			}
+			.negative-diff {
+				color: #ef5350;
+				font-weight: bold;
+			}
+			.comparison-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+				gap: 20px;
+				margin: 20px 0;
+			}
+			.comparison-card {
+				background-color: #263238;
+				padding: 15px;
+				border-radius: 8px;
+			}
+			.element-header {
+				font-size: 18px;
+				font-weight: bold;
+				color: #ffd54f;
+				margin-bottom: 10px;
+				border-bottom: 1px solid #424242;
+				padding-bottom: 5px;
+			}
 
-    <div id="examples"></div>
+			/* Mobile responsive styles */
+			@media (max-width: 768px) {
+				body {
+					padding: 10px;
+					font-size: 14px;
+				}
+				h1 {
+					font-size: 1.5em;
+					word-wrap: break-word;
+				}
+				h2 {
+					font-size: 1.3em;
+					margin-top: 20px;
+				}
+				h3 {
+					font-size: 1.1em;
+					margin-top: 15px;
+				}
+				.example {
+					padding: 10px;
+					margin: 10px 0;
+				}
+				.code {
+					font-size: 12px;
+					padding: 8px;
+					overflow-x: auto;
+					white-space: pre-wrap;
+					word-wrap: break-word;
+				}
+				.output {
+					padding: 8px;
+					font-size: 13px;
+				}
+				.planet-name {
+					font-size: 1.1em;
+				}
+				table {
+					font-size: 12px;
+					overflow-x: auto;
+					display: block;
+					width: 100%;
+				}
+				th,
+				td {
+					padding: 6px;
+					font-size: 11px;
+				}
+				.comparison-grid {
+					grid-template-columns: 1fr;
+					gap: 15px;
+				}
+				.comparison-card {
+					padding: 10px;
+				}
+				.comparison-label {
+					min-width: 40px;
+					font-size: 11px;
+				}
+				.comparison-bar-container {
+					height: 24px;
+				}
+				.element-header {
+					font-size: 16px;
+				}
+				pre {
+					font-size: 11px;
+					padding: 8px;
+					overflow-x: auto;
+				}
+				.layer {
+					padding: 8px;
+					margin: 8px 0;
+				}
+				.compound-item {
+					padding: 6px;
+					margin: 4px 0;
+					font-size: 12px;
+				}
+				.color-swatch {
+					width: 16px;
+					height: 16px;
+					margin-right: 6px;
+				}
+			}
 
-    <script type="module">
-      import {
-        planetCompositions,
-        getPlanetElements,
-        compareElementalComposition,
-        findPlanetsWithElement,
-        enrichPlanetWithColors,
-      } from "./planet-composition.js";
-      import { getFormulaColor } from "./formula-registry.js";
+			@media (max-width: 480px) {
+				body {
+					padding: 8px;
+					font-size: 13px;
+				}
+				h1 {
+					font-size: 1.3em;
+				}
+				h2 {
+					font-size: 1.2em;
+				}
+				.comparison-bars {
+					flex-direction: column;
+					align-items: stretch;
+					gap: 5px;
+				}
+				.comparison-label {
+					text-align: left;
+					margin-bottom: 2px;
+				}
+				.comparison-bar-container {
+					height: 20px;
+				}
+				table {
+					font-size: 11px;
+					width: 100%;
+				}
+				th,
+				td {
+					padding: 4px;
+					font-size: 10px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Planet Composition Usage Examples</h1>
+		<p>
+			This page demonstrates all exported functions and objects from
+			<code>planet-composition.js</code>
+		</p>
 
-      const examplesDiv = document.getElementById("examples");
+		<div id="examples"></div>
 
-      // Example 1: planetCompositions
-      examplesDiv.innerHTML += `
+		<script type="module">
+			import {
+				planetCompositions,
+				getPlanetElements,
+				compareElementalComposition,
+				findPlanetsWithElement,
+				enrichPlanetWithColors,
+			} from './lib/planet-composition.js?v=1';
+			import { getFormulaColor } from './lib/formula-registry.js?v=1';
+
+			const examplesDiv = document.getElementById('examples');
+
+			// Example 1: planetCompositions
+			examplesDiv.innerHTML += `
         <h2>1. planetCompositions</h2>
         <div class="example">
           <p>Complete composition data for all planets, organized by layers.</p>
@@ -200,24 +325,24 @@
           <div class="output">
             <strong>Available planets:</strong> ${planetCompositions.length}<br><br>
             ${planetCompositions
-              .map((planet) => {
-                const layerNames = Object.keys(planet.layers);
-                return `
+													.map((planet) => {
+														const layerNames = Object.keys(planet.layers);
+														return `
               <div class="planet-name">${planet.name}</div>
               <div style="padding-left: 20px;">
-                Layers: ${layerNames.join(", ")}<br>
+                Layers: ${layerNames.join(', ')}<br>
                 Total compounds: ${Object.values(planet.layers).reduce((sum, layer) => sum + layer.length, 0)}
               </div>
             `;
-              })
-              .join("")}
+													})
+													.join('')}
           </div>
         </div>
       `;
 
-      // Example 2: getPlanetElements
-      const testPlanets = ["Earth", "Mars", "Jupiter"];
-      examplesDiv.innerHTML += `
+			// Example 2: getPlanetElements
+			const testPlanets = ['Earth', 'Mars', 'Jupiter'];
+			examplesDiv.innerHTML += `
         <h2>2. getPlanetElements(planetName, layerWeights)</h2>
         <div class="example">
           <p>Calculate the total elemental composition for a planet based on layer weights.</p>
@@ -225,23 +350,23 @@
           <div class="output">
       `;
 
-      testPlanets.forEach((planetName) => {
-        // Provide default layer weights for the example
-        const layerWeights = {
-          surface: 0.2,
-          mantle: 0.5,
-          core: 0.3,
-          intermediate: 0.4,
-        };
-        const elements = getPlanetElements(planetName, layerWeights);
+			testPlanets.forEach((planetName) => {
+				// Provide default layer weights for the example
+				const layerWeights = {
+					surface: 0.2,
+					mantle: 0.5,
+					core: 0.3,
+					intermediate: 0.4,
+				};
+				const elements = getPlanetElements(planetName, layerWeights);
 
-        if (!elements) return; // Skip if no data available
+				if (!elements) return; // Skip if no data available
 
-        const sortedElements = Object.entries(elements)
-          .sort(([, a], [, b]) => b - a)
-          .slice(0, 10);
+				const sortedElements = Object.entries(elements)
+					.sort(([, a], [, b]) => b - a)
+					.slice(0, 10);
 
-        examplesDiv.innerHTML += `
+				examplesDiv.innerHTML += `
           <div class="planet-name">${planetName}</div>
           <table>
             <tr>
@@ -251,10 +376,10 @@
               <th>Visual</th>
             </tr>
             ${sortedElements
-              .map(([element, amount]) => {
-                const maxAmount = sortedElements[0][1];
-                const percentage = ((amount / maxAmount) * 100).toFixed(1);
-                return `
+													.map(([element, amount]) => {
+														const maxAmount = sortedElements[0][1];
+														const percentage = ((amount / maxAmount) * 100).toFixed(1);
+														return `
               <tr>
                 <td><strong>${element}</strong></td>
                 <td>${amount.toFixed(4)}</td>
@@ -262,59 +387,59 @@
                 <td><div class="bar" style="width: ${percentage}%"></div></td>
               </tr>
             `;
-              })
-              .join("")}
+													})
+													.join('')}
           </table>
         `;
-      });
+			});
 
-      examplesDiv.innerHTML += `
+			examplesDiv.innerHTML += `
           </div>
         </div>
       `;
 
-      // Example 4: compareElementalComposition (Enhanced)
-      const layerWeights = {
-        surface: 0.2,
-        mantle: 0.5,
-        core: 0.3,
-        intermediate: 0.4,
-      };
+			// Example 4: compareElementalComposition (Enhanced)
+			const layerWeights = {
+				surface: 0.2,
+				mantle: 0.5,
+				core: 0.3,
+				intermediate: 0.4,
+			};
 
-      // Get comparison data
-      const planet1 = "Earth";
-      const planet2 = "Mars";
-      const elements1 = getPlanetElements(planet1, layerWeights);
-      const elements2 = getPlanetElements(planet2, layerWeights);
+			// Get comparison data
+			const planet1 = 'Earth';
+			const planet2 = 'Mars';
+			const elements1 = getPlanetElements(planet1, layerWeights);
+			const elements2 = getPlanetElements(planet2, layerWeights);
 
-      // Get all elements from both planets
-      const allElements = new Set([
-        ...Object.keys(elements1),
-        ...Object.keys(elements2),
-      ]);
+			// Get all elements from both planets
+			const allElements = new Set([
+				...Object.keys(elements1),
+				...Object.keys(elements2),
+			]);
 
-      const comparisonData = {};
-      allElements.forEach((element) => {
-        comparisonData[element] = {
-          [planet1]: elements1[element] || 0,
-          [planet2]: elements2[element] || 0,
-          difference: (elements1[element] || 0) - (elements2[element] || 0),
-        };
-      });
+			const comparisonData = {};
+			allElements.forEach((element) => {
+				comparisonData[element] = {
+					[planet1]: elements1[element] || 0,
+					[planet2]: elements2[element] || 0,
+					difference: (elements1[element] || 0) - (elements2[element] || 0),
+				};
+			});
 
-      // Sort by absolute difference
-      const sortedComparison = Object.entries(comparisonData)
-        .sort(([, a], [, b]) => Math.abs(b.difference) - Math.abs(a.difference))
-        .slice(0, 12);
+			// Sort by absolute difference
+			const sortedComparison = Object.entries(comparisonData)
+				.sort(([, a], [, b]) => Math.abs(b.difference) - Math.abs(a.difference))
+				.slice(0, 12);
 
-      // Find max value for scaling bars
-      const maxValue = Math.max(
-        ...sortedComparison.map(([, data]) =>
-          Math.max(data[planet1], data[planet2]),
-        ),
-      );
+			// Find max value for scaling bars
+			const maxValue = Math.max(
+				...sortedComparison.map(([, data]) =>
+					Math.max(data[planet1], data[planet2]),
+				),
+			);
 
-      examplesDiv.innerHTML += `
+			examplesDiv.innerHTML += `
         <h2>3. compareElementalComposition(planet1, planet2)</h2>
         <div class="example">
           <p>Compare the elemental composition between two planets with visual bars showing relative abundances.</p>
@@ -325,17 +450,16 @@
             </h3>
             <div class="comparison-grid">
               ${sortedComparison
-                .map(([element, data]) => {
-                  const val1 = data[planet1];
-                  const val2 = data[planet2];
-                  const width1 = (val1 / maxValue) * 100;
-                  const width2 = (val2 / maxValue) * 100;
-                  const diff = data.difference;
-                  const diffClass =
-                    diff > 0 ? "positive-diff" : "negative-diff";
-                  const diffSign = diff > 0 ? "+" : "";
+															.map(([element, data]) => {
+																const val1 = data[planet1];
+																const val2 = data[planet2];
+																const width1 = (val1 / maxValue) * 100;
+																const width2 = (val2 / maxValue) * 100;
+																const diff = data.difference;
+																const diffClass = diff > 0 ? 'positive-diff' : 'negative-diff';
+																const diffSign = diff > 0 ? '+' : '';
 
-                  return `
+																return `
                     <div class="comparison-card">
                       <div class="element-header">${element}</div>
 
@@ -367,8 +491,8 @@
                       </div>
                     </div>
                   `;
-                })
-                .join("")}
+															})
+															.join('')}
             </div>
 
             <h3 style="margin-top: 30px;">Summary Table</h3>
@@ -381,33 +505,33 @@
                 <th>Ratio (${planet1}/${planet2})</th>
               </tr>
               ${sortedComparison
-                .map(([element, data]) => {
-                  const diffColor = data.difference > 0 ? "#66bb6a" : "#ef5350";
-                  const ratio =
-                    data[planet2] > 0
-                      ? (data[planet1] / data[planet2]).toFixed(2)
-                      : "∞";
-                  return `
+															.map(([element, data]) => {
+																const diffColor = data.difference > 0 ? '#66bb6a' : '#ef5350';
+																const ratio =
+																	data[planet2] > 0
+																		? (data[planet1] / data[planet2]).toFixed(2)
+																		: '∞';
+																return `
                     <tr>
                       <td><strong>${element}</strong></td>
                       <td>${data[planet1].toFixed(4)}</td>
                       <td>${data[planet2].toFixed(4)}</td>
                       <td style="color: ${diffColor}">
-                        ${data.difference > 0 ? "+" : ""}${data.difference.toFixed(4)}
+                        ${data.difference > 0 ? '+' : ''}${data.difference.toFixed(4)}
                       </td>
                       <td>${ratio}×</td>
                     </tr>
                   `;
-                })
-                .join("")}
+															})
+															.join('')}
             </table>
           </div>
         </div>
       `;
 
-      // Example 4: findPlanetsWithElement
-      const elementsToFind = ["H", "Fe", "O", "Si"];
-      examplesDiv.innerHTML += `
+			// Example 4: findPlanetsWithElement
+			const elementsToFind = ['H', 'Fe', 'O', 'Si'];
+			examplesDiv.innerHTML += `
         <h2>4. findPlanetsWithElement(elementSymbol, threshold)</h2>
         <div class="example">
           <p>Find all planets that contain a specific element above a threshold.</p>
@@ -415,9 +539,9 @@
           <div class="output">
       `;
 
-      elementsToFind.forEach((element) => {
-        const planets = findPlanetsWithElement(element, 0.01);
-        examplesDiv.innerHTML += `
+			elementsToFind.forEach((element) => {
+				const planets = findPlanetsWithElement(element, 0.01);
+				examplesDiv.innerHTML += `
           <h3>Planets containing ${element} (threshold: 0.01)</h3>
           <table>
             <tr>
@@ -426,64 +550,53 @@
               <th>Visual</th>
             </tr>
             ${planets
-              .map((planet) => {
-                const maxAmount = planets[0].amount;
-                const percentage = ((planet.amount / maxAmount) * 100).toFixed(
-                  1,
-                );
-                return `
+													.map((planet) => {
+														const maxAmount = planets[0].amount;
+														const percentage = ((planet.amount / maxAmount) * 100).toFixed(1);
+														return `
               <tr>
                 <td><strong>${planet.name}</strong></td>
                 <td>${planet.amount.toFixed(4)}</td>
                 <td><div class="bar" style="width: ${percentage}%"></div></td>
               </tr>
             `;
-              })
-              .join("")}
+													})
+													.join('')}
           </table>
         `;
-      });
+			});
 
-      examplesDiv.innerHTML += `
+			examplesDiv.innerHTML += `
           </div>
         </div>
       `;
 
-      // Example 5: getFormulaColor
-      const testCompounds = [
-        "H2O",
-        "Fe",
-        "SiO2",
-        "CH4",
-        "NH3",
-        "H2",
-        "He",
-        "N2",
-      ];
-      examplesDiv.innerHTML += `
+			// Example 5: getFormulaColor
+			const testCompounds = ['H2O', 'Fe', 'SiO2', 'CH4', 'NH3', 'H2', 'He', 'N2'];
+			examplesDiv.innerHTML += `
         <h2>5. getFormulaColor(formula)</h2>
         <div class="example">
           <p>Get the color for a compound from the formula registry.</p>
           <div class="code">getFormulaColor("H2O")  // Returns: "#2196F3"</div>
           <div class="output">
             ${testCompounds
-              .map((formula) => {
-                const color = getFormulaColor(formula);
-                return `
+													.map((formula) => {
+														const color = getFormulaColor(formula);
+														return `
               <div class="compound-item">
                 <span class="color-swatch" style="background-color: ${color}"></span>
                 <strong>${formula}</strong> → ${color}
               </div>
             `;
-              })
-              .join("")}
+													})
+													.join('')}
           </div>
         </div>
       `;
 
-      // Example 6: enrichPlanetWithColors
-      const enrichedPlanet = enrichPlanetWithColors("Mars");
-      examplesDiv.innerHTML += `
+			// Example 6: enrichPlanetWithColors
+			const enrichedPlanet = enrichPlanetWithColors('Mars');
+			examplesDiv.innerHTML += `
         <h2>6. enrichPlanetWithColors(planetName)</h2>
         <div class="example">
           <p>Add color information to each compound in a planet's composition.</p>
@@ -492,45 +605,43 @@
             <div class="planet-name">${enrichedPlanet.name}</div>
       `;
 
-      for (const [layerName, compounds] of Object.entries(
-        enrichedPlanet.layers,
-      )) {
-        examplesDiv.innerHTML += `
+			for (const [layerName, compounds] of Object.entries(enrichedPlanet.layers)) {
+				examplesDiv.innerHTML += `
           <div class="layer">
             <div class="layer-name">${layerName.toUpperCase()}</div>
             ${compounds
-              .map(
-                (compound) => `
+													.map(
+														(compound) => `
               <div class="compound-item">
                 <span class="color-swatch" style="background-color: ${compound.color}"></span>
                 <strong>${compound.compound}</strong> (${compound.formula}) - ${compound.percent}%
                 <div class="bar" style="width: ${compound.percent}%; background: linear-gradient(90deg, ${compound.color} 0%, ${compound.color}88 100%);"></div>
               </div>
             `,
-              )
-              .join("")}
+													)
+													.join('')}
           </div>
         `;
-      }
+			}
 
-      examplesDiv.innerHTML += `
+			examplesDiv.innerHTML += `
           </div>
         </div>
       `;
 
-      // Example 7: Full JSON output sample
-      examplesDiv.innerHTML += `
+			// Example 7: Full JSON output sample
+			examplesDiv.innerHTML += `
         <h2>7. Complete Data Structure Example</h2>
         <div class="example">
           <p>Example of the complete enriched planet data structure with colors.</p>
           <div class="code">const mars = enrichPlanetWithColors("Mars")</div>
           <div class="output">
-            <pre>${JSON.stringify(enrichPlanetWithColors("Pluto"), null, 2).substring(0, 1500)}...
+            <pre>${JSON.stringify(enrichPlanetWithColors('Pluto'), null, 2).substring(0, 1500)}...
 
 (truncated for display)</pre>
           </div>
         </div>
       `;
-    </script>
-  </body>
+		</script>
+	</body>
 </html>

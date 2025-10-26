@@ -6,43 +6,9 @@
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<title>🪐 Vibe Universe</title>
-		<link rel="stylesheet" href="./controls.css" />
-		<script type="text/javascript" src="./lib/paper-full.js"></script>
-		<script type="text/javascript" src="./lib/svg-export.js"></script>
-		<style>
-			body {
-				display: flex;
-				flex-direction: column;
-				justify-content: center;
-				align-items: center;
-				height: 100vh;
-				margin: 0;
-				background-color: #161616;
-				overflow: hidden;
-				/* Prevent text selection and touch callouts on mobile */
-				-webkit-user-select: none;
-				-moz-user-select: none;
-				-ms-user-select: none;
-				user-select: none;
-				-webkit-touch-callout: none;
-			}
-			canvas {
-				cursor: grab;
-				max-width: 100vw;
-				max-height: 100vh;
-				/* Prevent image dragging on mobile */
-				-webkit-user-drag: none;
-				-khtml-user-drag: none;
-				-moz-user-drag: none;
-				-o-user-drag: none;
-				user-drag: none;
-				/* Better touch handling */
-				touch-action: none;
-			}
-			canvas:active {
-				cursor: grabbing;
-			}
-		</style>
+		<link rel="stylesheet" href="./controls.css?v=1" />
+		<script type="text/javascript" src="./lib/paper-full.js?v=1"></script>
+		<script type="text/javascript" src="./lib/svg-export.js?v=1"></script>
 	</head>
 	<body>
 		<div id="menuToggleWrapper">
@@ -52,31 +18,31 @@
 		</div>
 
 		<div class="controls">
-			<h3 style="margin-top: 0; margin-bottom: 15px">Solar System Controls</h3>
+			<h3 class="controls-title">Solar System Controls</h3>
 
 			<div class="control-group">
-				<table style="width: 100%; font-size: 12px">
+				<table class="stats-table">
 					<tr>
 						<td>Time Scale:</td>
-						<td style="text-align: right">
+						<td class="text-right">
 							<span id="timeSpeedValue">1.1M×</span>
 						</td>
 					</tr>
 					<tr>
 						<td>Inclination:</td>
-						<td style="text-align: right">
+						<td class="text-right">
 							<span id="inclinationValue">60°</span>
 						</td>
 					</tr>
 					<tr>
 						<td>Rotation:</td>
-						<td style="text-align: right">
+						<td class="text-right">
 							<span id="rotationValue">0°</span>
 						</td>
 					</tr>
 					<tr>
 						<td>Zoom:</td>
-						<td style="text-align: right">
+						<td class="text-right">
 							<span id="scaleValue">1.00x</span>
 						</td>
 					</tr>
@@ -121,48 +87,31 @@
 
 			<button id="pausePlay">Pause</button>
 
-			<div
-				class="control-group"
-				style="margin-top: 20px; border-top: 1px solid #555; padding-top: 15px"
-			>
-				<label style="font-size: 11px; margin-bottom: 10px">Examples:</label>
-				<div style="display: flex; flex-direction: column; gap: 5px">
-					<a
-						href="view-formula-colors.html"
-						style="color: #4a90e2; text-decoration: none; font-size: 11px"
-						>Formula Colors</a
-					>
-					<a
-						href="example-planet-composition.html"
-						style="color: #4a90e2; text-decoration: none; font-size: 11px"
+			<div class="control-group section-divider">
+				<label class="text-small mb-small">Examples:</label>
+				<div class="flex-col gap-small">
+					<a href="view-formula-colors.html" class="link-primary">Formula Colors</a>
+					<a href="example-planet-composition.html" class="link-primary"
 						>Planet Composition</a
 					>
 				</div>
 			</div>
 
-			<div
-				class="control-group"
-				style="margin-top: 15px; border-top: 1px solid #555; padding-top: 15px"
-			>
+			<div class="control-group section-divider desktop-only">
+				<div class="info">Press 'd' to export as SVG</div>
+			</div>
+
+			<div class="control-group section-divider-small">
 				<a
 					href="https://github.com/select/vibe-universe"
 					target="_blank"
 					rel="noopener noreferrer"
-					style="
-						color: #4a90e2;
-						text-decoration: none;
-						font-size: 11px;
-						display: flex;
-						align-items: center;
-						gap: 5px;
-					"
+					class="link-primary flex-row gap-small"
 				>
-					<span style="font-size: 14px">⚙</span> GitHub Repository
+					<span class="icon-size">⚙</span> GitHub Repository
 				</a>
 			</div>
 		</div>
-
-		<div class="info">Press 'd' to export as SVG</div>
 
 		<div class="scale-indicator">
 			<div class="scale-item">
@@ -180,7 +129,7 @@
 		<canvas id="myCanvas" width="1200" height="1200"></canvas>
 
 		<script type="module">
-			import { initUniverse } from "./lib/universe.js";
+			import { initUniverse } from './lib/universe.js?v=1';
 
 			// Initialize the universe simulation
 			initUniverse();
