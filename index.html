@@ -2,7 +2,12 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+		/>
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<title>Vibe Universe</title>
 		<link rel="stylesheet" href="./controls.css" />
 		<script type="text/javascript" src="./lib/paper-full.js"></script>
@@ -17,11 +22,25 @@
 				margin: 0;
 				background-color: #161616;
 				overflow: hidden;
+				/* Prevent text selection and touch callouts on mobile */
+				-webkit-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+				-webkit-touch-callout: none;
 			}
 			canvas {
 				cursor: grab;
 				max-width: 100vw;
 				max-height: 100vh;
+				/* Prevent image dragging on mobile */
+				-webkit-user-drag: none;
+				-khtml-user-drag: none;
+				-moz-user-drag: none;
+				-o-user-drag: none;
+				user-drag: none;
+				/* Better touch handling */
+				touch-action: none;
 			}
 			canvas:active {
 				cursor: grabbing;
