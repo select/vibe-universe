@@ -751,6 +751,7 @@
 					opacity = 1, // number - opacity
 					targetGroup, // paper.Group - group to add label to (labelGroup or moonGroup)
 					currentLayer = null, // string - current layer being displayed (e.g., "surface")
+					hoverGroupId = null, // string - hover group ID for this body
 				} = config;
 
 				// Generate label suffix based on scaling
@@ -866,7 +867,16 @@
 						layerText.fontFamily = "monospace";
 						layerText.justification = "left";
 						layerText.opacity = opacity;
-						targetGroup.addChild(layerText);
+
+						// Make layer text clickable
+						layerText.data = {
+							isLayerIndicator: true,
+							bodyName: name,
+							hoverGroupId: hoverGroupId,
+						};
+
+						// Add to clickAreaGroup so it's drawn on top and clickable
+						clickAreaGroup.addChild(layerText);
 					}
 				}
 			}
@@ -985,11 +995,17 @@
 				bodyCircle.strokeColor = "white";
 				bodyCircle.strokeWidth = strokeWidth;
 				bodyCircle.opacity = opacity;
+
+				// Create unique hover group ID for this body
+				const hoverGroupId = `${bodyType}_${name}_hover`;
+
 				bodyCircle.data = {
 					type: bodyType,
 					planetIndex: bodyIndex,
 					moonName: moonName,
+					bodyName: name,
 					isBody: true,
+					hoverGroupId: hoverGroupId,
 				};
 
 				if (bodyType === "planet") {
@@ -1023,6 +1039,7 @@
 					isClickArea: true,
 					originalRadius: baseClickRadius,
 					orbitRadius: orbitRadius, // Store orbit radius to check label visibility
+					hoverGroupId: hoverGroupId,
 				};
 				clickAreaGroup.addChild(clickCircle);
 
@@ -1061,6 +1078,7 @@
 							bodyType: bodyType,
 							opacity: opacity,
 							targetGroup: targetGroup,
+							hoverGroupId: hoverGroupId,
 							currentLayer: isThisBodyHovered ? currentLayer : null, // Only show when hovered
 						});
 					}
@@ -1375,6 +1393,28 @@
 				const innerRadius = clickCircle.bounds.width / 2;
 				const strokeWidth = 5;
 
+				// Draw large background rectangle for hover area
+				const rectSize = innerRadius * 6; // Large rectangle
+				const backgroundRect = new paper.Path.Rectangle({
+					center: centerPos,
+					size: [rectSize, rectSize],
+				});
+				backgroundRect.strokeColor = new paper.Color(1, 0, 0, 0.1); // Red border, almost invisible
+				backgroundRect.strokeWidth = 2;
+				backgroundRect.fillColor = new paper.Color(0, 0, 0, 0.01); // Almost transparent fill for hover detection
+				backgroundRect.data = {
+					type: clickCircle.data.type,
+					planetIndex: clickCircle.data.planetIndex,
+					moonName: clickCircle.data.moonName,
+					bodyName: bodyName,
+					isClickArea: true,
+					isCompositionBackground: true, // Mark as composition background
+					originalRadius: clickCircle.data.originalRadius,
+					orbitRadius: clickCircle.data.orbitRadius,
+					hoverGroupId: clickCircle.data.hoverGroupId,
+				};
+				clickAreaGroup.addChild(backgroundRect);
+
 				// Calculate segment boundaries for colors
 				let currentAngle = -Math.PI / 2; // Start at top (12 o'clock)
 				const segments = [];
@@ -1426,6 +1466,11 @@
 						segPath.strokeWidth = strokeWidth;
 						segPath.strokeCap = "round";
 
+						// Add hover group ID so it's part of the same hover group
+						segPath.data = {
+							hoverGroupId: clickCircle.data.hoverGroupId,
+						};
+
 						const segSteps = 30;
 						for (let i = 0; i <= segSteps; i++) {
 							const angle =
@@ -1471,12 +1516,22 @@
 								formulaLabel.justification = "center";
 								formulaLabel.opacity = Math.min(drawProgress, 1);
 
+								// Add hover group ID so it's part of the same hover group
+								formulaLabel.data = {
+									hoverGroupId: clickCircle.data.hoverGroupId,
+								};
+
 								// Add slight background for readability
 								const labelBounds = formulaLabel.bounds;
 								const background = new paper.Path.Rectangle(
 									labelBounds.expand(2),
 								);
 								background.fillColor = new paper.Color(0, 0, 0, 0.5);
+
+								// Add hover group ID to background as well
+								background.data = {
+									hoverGroupId: clickCircle.data.hoverGroupId,
+								};
 								clickAreaGroup.addChild(background);
 								clickAreaGroup.addChild(formulaLabel);
 							}
@@ -1585,11 +1640,36 @@
 								}
 							}
 						});
+					} else if (hitResult.item.data?.hoverGroupId) {
+						// Hit a composition element (segment, label, or background)
+						// Find the click area with the same hoverGroupId
+						const targetGroupId = hitResult.item.data.hoverGroupId;
+						clickAreaGroup.children.forEach((child) => {
+							if (
+								child.data?.hoverGroupId === targetGroupId &&
+								child.data?.isClickArea
+							) {
+								foundClickArea = child;
+							}
+						});
 					}
 				}
 
-				// Reset previous hover state with animation
-				if (hoveredClickArea && hoveredClickArea !== foundClickArea) {
+				// Check if we're still hovering over the same hover group (click circle, body, or background rect)
+				const isSameHoverGroup =
+					hoveredClickArea &&
+					foundClickArea &&
+					hoveredClickArea.data?.hoverGroupId &&
+					foundClickArea.data?.hoverGroupId &&
+					hoveredClickArea.data.hoverGroupId ===
+						foundClickArea.data.hoverGroupId;
+
+				// Reset previous hover state with animation (only if moving to different hover group)
+				if (
+					hoveredClickArea &&
+					hoveredClickArea !== foundClickArea &&
+					!isSameHoverGroup
+				) {
 					if (hoveredClickArea.data?.originalRadius) {
 						// Animate back to original size
 						animateRadius(
@@ -1597,11 +1677,21 @@
 							hoveredClickArea.data.originalRadius,
 						);
 					}
+
+					// Clear the hover state for this body (hides composition)
+					if (hoveredClickArea.data?.bodyName) {
+						bodyHoverStates.delete(hoveredClickArea.data.bodyName);
+					}
+
 					hoveredClickArea = null;
 				}
 
-				// Apply hover effect to new item with animation
-				if (foundClickArea && foundClickArea !== hoveredClickArea) {
+				// Apply hover effect to new item with animation (only if different hover group)
+				if (
+					foundClickArea &&
+					foundClickArea !== hoveredClickArea &&
+					!isSameHoverGroup
+				) {
 					// Only animate if label is visible
 					const orbitRadius = foundClickArea.data.orbitRadius || 0;
 					const hasVisibleLabel = orbitRadius >= minOrbitRadiusForLabel;
@@ -1621,6 +1711,9 @@
 
 						canvas.style.cursor = "pointer";
 					}
+				} else if (isSameHoverGroup && foundClickArea) {
+					// Update reference when moving within same hover group (e.g., from click circle to background rect)
+					hoveredClickArea = foundClickArea;
 				} else if (!foundClickArea) {
 					canvas.style.cursor = isDragging ? "grabbing" : "grab";
 				}
@@ -1692,6 +1785,17 @@
 					tolerance: 5,
 				});
 
+				// Check if clicked on layer indicator text
+				if (
+					hitResult &&
+					hitResult.item.data &&
+					hitResult.item.data.isLayerIndicator
+				) {
+					const bodyName = hitResult.item.data.bodyName;
+					cycleLayer(bodyName);
+					return;
+				}
+
 				if (
 					hitResult &&
 					hitResult.item.data &&
@@ -1703,8 +1807,9 @@
 					// Check if this celestial body is currently hovered (has composition showing)
 					const hoverState = bodyHoverStates.get(bodyName);
 					if (hoverState && hoverState.showComposition) {
-						// Cycle to next layer for both planets and moons
-						cycleLayer(bodyName);
+						// Don't do anything when clicking on click area with composition showing
+						// Layer changes will be handled by clicking on layer indicator text
+						return;
 					} else {
 						// Center the clicked body
 						if (bodyType === "planet") {
