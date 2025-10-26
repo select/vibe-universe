@@ -1,0 +1,17 @@
+{
+	"name": "vibe-universe",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"lint": "oxlint .",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.19.0",
+	"devDependencies": {
+		"oxlint": "1.24.0"
+	}
+}
