@@ -1,11 +1,13 @@
 {
 	"name": "vibe-universe",
 	"version": "1.0.0",
+	"type": "module",
 	"description": "",
 	"main": "index.js",
 	"scripts": {
 		"lint": "oxlint . && prettier --check .",
 		"format": "prettier --write .",
+		"read-stars": "node scripts/read-star-data.js",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"keywords": [],

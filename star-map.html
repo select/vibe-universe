@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<title>⭐ Star Map - Nearby Stars</title>
+		<link rel="stylesheet" href="./controls.css?v=1" />
+		<script type="text/javascript" src="./lib/paper-full.js?v=1"></script>
+		<style>
+			.star-info {
+				position: absolute;
+				bottom: 20px;
+				left: 20px;
+				color: white;
+				font-family: monospace;
+				font-size: 11px;
+				background-color: rgba(0, 0, 0, 0.8);
+				padding: 10px;
+				border-radius: 5px;
+				max-width: 300px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="menuToggleWrapper">
+			<div id="menuToggle">
+				<span></span>
+			</div>
+		</div>
+
+		<div class="controls">
+			<h3 class="controls-title">Star Map Controls</h3>
+
+			<div class="control-group">
+				<table class="stats-table">
+					<tr>
+						<td>Stars Visible:</td>
+						<td class="text-right">
+							<span id="starCountValue">0</span>
+						</td>
+					</tr>
+					<tr>
+						<td>Max Distance:</td>
+						<td class="text-right">
+							<span id="maxDistanceValue">20 ly</span>
+						</td>
+					</tr>
+					<tr>
+						<td>Inclination:</td>
+						<td class="text-right">
+							<span id="inclinationValue">60°</span>
+						</td>
+					</tr>
+					<tr>
+						<td>Rotation:</td>
+						<td class="text-right">
+							<span id="rotationValue">0°</span>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<div class="control-group">
+				<label>
+					Max Distance:
+					<span id="distanceSliderValue" class="value">15 ly</span>
+				</label>
+				<input
+					type="range"
+					id="distanceSlider"
+					min="5"
+					max="100"
+					value="15"
+					step="5"
+				/>
+			</div>
+
+			<div class="control-group section-divider-small">
+				<a href="index.html" class="link-primary flex-row gap-small">
+					← Back to Solar System
+				</a>
+			</div>
+		</div>
+
+		<div class="star-info">
+			<div id="starInfoContent">Loading star data...</div>
+		</div>
+
+		<canvas id="myCanvas" width="1200" height="1200"></canvas>
+
+		<script type="module">
+			import { loadStarData } from './star-catalogue/star-data-loader.js?v=1';
+			import { initStarMap } from './star-catalogue/star-map.js?v=1';
+
+			// Load star data and initialize star map
+			loadStarData().then((stars) => {
+				initStarMap(stars);
+			});
+		</script>
+	</body>
+</html>
