@@ -118,10 +118,37 @@
 				color: #999;
 				margin-top: 5px;
 			}
+
+			.nav-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 20px;
+				padding: 10px 0;
+			}
+
+			.back-link {
+				color: #64b5f6;
+				text-decoration: none;
+				font-size: 14px;
+				padding: 8px 16px;
+				border: 2px solid #64b5f6;
+				border-radius: 4px;
+				transition: all 0.2s;
+			}
+
+			.back-link:hover {
+				background-color: #64b5f6;
+				color: #1a1a1a;
+			}
 		</style>
 	</head>
 	<body>
 		<div class="container">
+			<div class="nav-header">
+				<a href="index.html" class="back-link">← Back to Main</a>
+				<div></div>
+			</div>
 			<h1>⚛️ Chemical Formula Color Registry</h1>
 
 			<div class="stats" id="stats"></div>

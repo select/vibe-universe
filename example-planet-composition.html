@@ -293,9 +293,36 @@
 					font-size: 10px;
 				}
 			}
+
+			.nav-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 20px;
+				padding: 10px 0;
+			}
+
+			.back-link {
+				color: #64b5f6;
+				text-decoration: none;
+				font-size: 14px;
+				padding: 8px 16px;
+				border: 2px solid #64b5f6;
+				border-radius: 4px;
+				transition: all 0.2s;
+			}
+
+			.back-link:hover {
+				background-color: #64b5f6;
+				color: #161616;
+			}
 		</style>
 	</head>
 	<body>
+		<div class="nav-header">
+			<a href="index.html" class="back-link">← Back to Main</a>
+			<div></div>
+		</div>
 		<h1>Planet Composition Usage Examples</h1>
 		<p>
 			This page demonstrates all exported functions and objects from

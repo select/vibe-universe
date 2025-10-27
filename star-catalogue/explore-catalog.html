@@ -1,0 +1,2148 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Star & Exoplanet Catalog Explorer</title>
+		<style>
+			:root {
+				--bg-primary: #1a1a1a;
+				--bg-secondary: #2a2a2a;
+				--bg-tertiary: #333333;
+				--text-primary: #ffffff;
+				--text-secondary: #bbb;
+				--text-muted: #888;
+				--accent-blue: #64b5f6;
+				--accent-green: #66bb6a;
+				--accent-yellow: #fdd835;
+				--border-color: #444;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: 'Courier New', monospace;
+				background-color: var(--bg-primary);
+				color: var(--text-primary);
+				padding: 20px;
+				margin: 0;
+				line-height: 1.6;
+			}
+
+			.container {
+				max-width: 1600px;
+				margin: 0 auto;
+			}
+
+			h1 {
+				text-align: center;
+				margin-bottom: 10px;
+				font-size: 32px;
+				color: var(--accent-blue);
+			}
+
+			.subtitle {
+				text-align: center;
+				color: var(--text-secondary);
+				margin-bottom: 30px;
+				font-size: 14px;
+			}
+
+			/* Dataset Tabs */
+			.tabs {
+				display: flex;
+				gap: 10px;
+				margin-bottom: 20px;
+				border-bottom: 2px solid var(--border-color);
+			}
+
+			.tab {
+				padding: 10px 20px;
+				background: var(--bg-secondary);
+				border: none;
+				color: var(--text-secondary);
+				cursor: pointer;
+				font-family: inherit;
+				font-size: 14px;
+				border-radius: 8px 8px 0 0;
+				transition: all 0.2s;
+			}
+
+			.tab:hover {
+				background: var(--bg-tertiary);
+			}
+
+			.tab.active {
+				background: var(--accent-blue);
+				color: var(--bg-primary);
+				font-weight: bold;
+			}
+
+			/* Search Bar */
+			.search-section {
+				background: var(--bg-secondary);
+				padding: 20px;
+				border-radius: 8px;
+				margin-bottom: 20px;
+			}
+
+			.search-input {
+				width: 100%;
+				padding: 12px 15px;
+				background: var(--bg-primary);
+				border: 2px solid var(--border-color);
+				color: var(--text-primary);
+				font-family: inherit;
+				font-size: 16px;
+				border-radius: 8px;
+				transition: border-color 0.2s;
+			}
+
+			.search-input:focus {
+				outline: none;
+				border-color: var(--accent-blue);
+			}
+
+			/* Filters */
+			.filters-section {
+				background: var(--bg-secondary);
+				padding: 20px;
+				border-radius: 8px;
+				margin-bottom: 20px;
+			}
+
+			.filter-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 20px;
+				padding-bottom: 15px;
+				border-bottom: 1px solid var(--border-color);
+			}
+
+			.filter-title {
+				font-size: 18px;
+				color: var(--accent-blue);
+				margin: 0;
+			}
+
+			.expand-btn {
+				padding: 6px 12px;
+				background: var(--accent-blue);
+				border: none;
+				color: var(--bg-primary);
+				cursor: pointer;
+				font-family: inherit;
+				font-size: 12px;
+				border-radius: 4px;
+				transition: opacity 0.2s;
+				font-weight: bold;
+			}
+
+			.expand-btn:hover {
+				opacity: 0.9;
+			}
+
+			.toggle-group {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+
+			.toggle-switch {
+				position: relative;
+				display: inline-block;
+				width: 50px;
+				height: 24px;
+			}
+
+			.toggle-switch input {
+				opacity: 0;
+				width: 0;
+				height: 0;
+			}
+
+			.toggle-slider {
+				position: absolute;
+				cursor: pointer;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background-color: var(--bg-tertiary);
+				transition: 0.3s;
+				border-radius: 24px;
+			}
+
+			.toggle-slider:before {
+				position: absolute;
+				content: '';
+				height: 16px;
+				width: 16px;
+				left: 4px;
+				bottom: 4px;
+				background-color: var(--text-muted);
+				transition: 0.3s;
+				border-radius: 50%;
+			}
+
+			.toggle-switch input:checked + .toggle-slider {
+				background-color: var(--accent-green);
+			}
+
+			.toggle-switch input:checked + .toggle-slider:before {
+				transform: translateX(26px);
+				background-color: white;
+			}
+
+			.toggle-label {
+				font-size: 14px;
+				color: var(--text-secondary);
+			}
+
+			.filters-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+				gap: 15px;
+			}
+
+			.filter-group {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+
+			.filter-label {
+				font-size: 12px;
+				color: var(--text-secondary);
+				text-transform: uppercase;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			.filter-label-text {
+				flex: 1;
+			}
+
+			.filter-label-values {
+				font-size: 11px;
+				color: var(--text-muted);
+				font-weight: normal;
+			}
+
+			.editable-value {
+				background: transparent;
+				border: 1px solid transparent;
+				color: var(--text-muted);
+				font-family: inherit;
+				font-size: inherit;
+				padding: 2px 4px;
+				border-radius: 3px;
+				min-width: 65px;
+				max-width: 75px;
+				text-align: center;
+			}
+
+			/* Hide number input arrows */
+			.editable-value::-webkit-outer-spin-button,
+			.editable-value::-webkit-inner-spin-button {
+				-webkit-appearance: none;
+				margin: 0;
+			}
+
+			.editable-value[type='number'] {
+				-moz-appearance: textfield;
+			}
+
+			.editable-value:hover {
+				border-color: var(--border-color);
+				background: var(--bg-primary);
+			}
+
+			.editable-value:focus {
+				outline: none;
+				border-color: var(--accent-blue);
+				background: var(--bg-primary);
+				color: var(--text-primary);
+			}
+
+			/* Sparkline Histogram */
+			.filter-sparkline {
+				height: 30px;
+				display: flex;
+				align-items: flex-end;
+				gap: 1px;
+				background: var(--bg-primary);
+				border-radius: 4px;
+				padding: 3px;
+				margin-bottom: 5px;
+			}
+
+			.sparkline-bar {
+				flex: 1;
+				background: linear-gradient(
+					to top,
+					var(--accent-blue),
+					var(--accent-green)
+				);
+				border-radius: 1px;
+				min-width: 2px;
+				opacity: 0.6;
+				transition: opacity 0.2s;
+			}
+
+			.sparkline-bar:hover {
+				opacity: 1;
+			}
+
+			/* Range Slider */
+			.range-slider-container {
+				position: relative;
+				height: 40px;
+				display: flex;
+				align-items: center;
+			}
+
+			.range-slider-track {
+				position: absolute;
+				width: 100%;
+				height: 6px;
+				background: var(--bg-tertiary);
+				border-radius: 3px;
+			}
+
+			.range-slider-range {
+				position: absolute;
+				height: 6px;
+				background: #555;
+				border-radius: 3px;
+			}
+
+			.range-slider-input {
+				position: absolute;
+				width: 100%;
+				height: 6px;
+				background: transparent;
+				pointer-events: none;
+				-webkit-appearance: none;
+				appearance: none;
+			}
+
+			.range-slider-input::-webkit-slider-thumb {
+				-webkit-appearance: none;
+				appearance: none;
+				width: 14px;
+				height: 14px;
+				border-radius: 50%;
+				background: #888;
+				cursor: pointer;
+				pointer-events: auto;
+				border: none;
+				box-shadow: none;
+			}
+
+			.range-slider-input::-moz-range-thumb {
+				width: 14px;
+				height: 14px;
+				border-radius: 50%;
+				background: #888;
+				cursor: pointer;
+				pointer-events: auto;
+				border: none;
+				box-shadow: none;
+			}
+
+			.range-slider-input::-webkit-slider-thumb:hover {
+				background: #aaa;
+			}
+
+			.range-slider-input::-moz-range-thumb:hover {
+				background: #aaa;
+			}
+
+			.filter-inputs {
+				display: flex;
+				gap: 10px;
+				align-items: center;
+			}
+
+			.filter-input {
+				flex: 1;
+				padding: 8px 10px;
+				background: var(--bg-primary);
+				border: 1px solid var(--border-color);
+				color: var(--text-primary);
+				font-family: inherit;
+				font-size: 14px;
+				border-radius: 4px;
+			}
+
+			.filter-input:focus {
+				outline: none;
+				border-color: var(--accent-blue);
+			}
+
+			/* Hide number input arrows for all number inputs */
+			input[type='number']::-webkit-outer-spin-button,
+			input[type='number']::-webkit-inner-spin-button {
+				-webkit-appearance: none;
+				margin: 0;
+			}
+
+			input[type='number'] {
+				-moz-appearance: textfield;
+			}
+
+			/* Stats Bar */
+			.stats-bar {
+				background: var(--bg-secondary);
+				padding: 15px 20px;
+				border-radius: 8px;
+				margin-bottom: 20px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				flex-wrap: wrap;
+				gap: 20px;
+			}
+
+			.stat {
+				display: flex;
+				align-items: baseline;
+				gap: 5px;
+			}
+
+			.stat-value {
+				font-size: 24px;
+				font-weight: bold;
+				color: var(--accent-green);
+			}
+
+			.stat-label {
+				font-size: 14px;
+				color: var(--text-secondary);
+			}
+
+			.field-selector-btn {
+				padding: 8px 16px;
+				background: var(--accent-blue);
+				border: none;
+				color: var(--bg-primary);
+				cursor: pointer;
+				font-family: inherit;
+				font-size: 14px;
+				border-radius: 4px;
+				font-weight: bold;
+			}
+
+			.field-selector-btn:hover {
+				opacity: 0.9;
+			}
+
+			/* Download Menu */
+			.download-container {
+				position: relative;
+				display: inline-block;
+			}
+
+			.download-menu {
+				position: absolute;
+				top: 100%;
+				right: 0;
+				background: var(--bg-secondary);
+				border: 1px solid var(--border-color);
+				border-radius: 4px;
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+				z-index: 100;
+				min-width: 120px;
+				display: none;
+			}
+
+			.download-menu.active {
+				display: block;
+			}
+
+			.download-option {
+				display: block;
+				width: 100%;
+				padding: 10px 15px;
+				background: none;
+				border: none;
+				color: var(--text-primary);
+				font-family: inherit;
+				font-size: 14px;
+				text-align: left;
+				cursor: pointer;
+				transition: background 0.2s;
+			}
+
+			.download-option:hover {
+				background: var(--bg-tertiary);
+			}
+
+			.download-option:first-child {
+				border-radius: 4px 4px 0 0;
+			}
+
+			.download-option:last-child {
+				border-radius: 0 0 4px 4px;
+			}
+
+			/* Field Selector Modal */
+			.modal {
+				display: none;
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(0, 0, 0, 0.8);
+				z-index: 1000;
+				padding: 20px;
+			}
+
+			.modal.active {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.modal-content {
+				background: var(--bg-secondary);
+				padding: 30px;
+				border-radius: 8px;
+				max-width: 800px;
+				max-height: 80vh;
+				overflow-y: auto;
+				width: 100%;
+			}
+
+			.modal-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 20px;
+			}
+
+			.modal-title {
+				font-size: 20px;
+				color: var(--accent-blue);
+			}
+
+			.close-btn {
+				background: none;
+				border: none;
+				color: var(--text-primary);
+				font-size: 24px;
+				cursor: pointer;
+				padding: 0;
+				width: 30px;
+				height: 30px;
+			}
+
+			.field-checkboxes {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+				gap: 10px;
+			}
+
+			.field-checkbox {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+
+			.field-checkbox input[type='checkbox'] {
+				width: 18px;
+				height: 18px;
+				cursor: pointer;
+			}
+
+			.field-checkbox label {
+				cursor: pointer;
+				font-size: 14px;
+			}
+
+			/* Results Table */
+			.results-section {
+				background: var(--bg-secondary);
+				padding: 20px;
+				border-radius: 8px;
+				margin-bottom: 20px;
+				overflow-x: auto;
+				max-height: 70vh;
+				overflow-y: auto;
+			}
+
+			.results-table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 13px;
+			}
+
+			.results-table th {
+				background: var(--bg-tertiary);
+				padding: 12px 8px;
+				text-align: left;
+				font-weight: bold;
+				color: var(--accent-yellow);
+				border-bottom: 2px solid var(--border-color);
+				position: sticky;
+				top: 0;
+				white-space: nowrap;
+			}
+
+			.results-table td {
+				padding: 10px 8px;
+				border-bottom: 1px solid var(--border-color);
+			}
+
+			.results-table tr:hover {
+				background: var(--bg-tertiary);
+			}
+
+			/* Distribution Charts */
+			.charts-section {
+				background: var(--bg-secondary);
+				padding: 20px;
+				border-radius: 8px;
+				margin-bottom: 20px;
+			}
+
+			.chart-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 15px;
+			}
+
+			.chart-title {
+				font-size: 18px;
+				color: var(--accent-blue);
+			}
+
+			.chart-controls {
+				display: flex;
+				gap: 10px;
+			}
+
+			.chart-btn {
+				padding: 8px 16px;
+				background: var(--accent-blue);
+				border: none;
+				color: var(--bg-primary);
+				cursor: pointer;
+				font-family: inherit;
+				font-size: 13px;
+				border-radius: 4px;
+				font-weight: bold;
+				transition: opacity 0.2s;
+			}
+
+			.chart-btn:hover {
+				opacity: 0.9;
+			}
+
+			.chart-btn.secondary {
+				background: var(--bg-tertiary);
+				color: var(--text-primary);
+			}
+
+			.chart-select {
+				width: 100%;
+				padding: 10px;
+				background: var(--bg-primary);
+				border: 1px solid var(--border-color);
+				color: var(--text-primary);
+				font-family: inherit;
+				font-size: 14px;
+				border-radius: 4px;
+				margin-bottom: 20px;
+			}
+
+			.chart-container {
+				margin-top: 20px;
+			}
+
+			.chart-bar {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				margin-bottom: 10px;
+			}
+
+			.chart-label {
+				min-width: 150px;
+				font-size: 12px;
+				color: var(--text-secondary);
+			}
+
+			.chart-bar-fill {
+				flex: 1;
+				height: 24px;
+				background: var(--accent-blue);
+				border-radius: 4px;
+				position: relative;
+			}
+
+			.chart-value {
+				position: absolute;
+				right: 8px;
+				top: 50%;
+				transform: translateY(-50%);
+				color: var(--bg-primary);
+				font-size: 12px;
+				font-weight: bold;
+			}
+
+			.histogram-section {
+				margin-top: 30px;
+				padding-top: 20px;
+				border-top: 2px solid var(--border-color);
+			}
+
+			.histogram-container {
+				display: flex;
+				align-items: flex-end;
+				gap: 4px;
+				height: 200px;
+				margin-top: 20px;
+				padding: 10px;
+				background: var(--bg-primary);
+				border-radius: 4px;
+			}
+
+			.histogram-bin {
+				flex: 1;
+				background: linear-gradient(
+					to top,
+					var(--accent-green),
+					var(--accent-blue)
+				);
+				border-radius: 2px 2px 0 0;
+				position: relative;
+				min-width: 8px;
+				transition: opacity 0.2s;
+				cursor: pointer;
+			}
+
+			.histogram-bin:hover {
+				opacity: 0.8;
+			}
+
+			.histogram-tooltip {
+				position: absolute;
+				bottom: 100%;
+				left: 50%;
+				transform: translateX(-50%);
+				background: var(--bg-tertiary);
+				color: var(--text-primary);
+				padding: 4px 8px;
+				border-radius: 4px;
+				font-size: 11px;
+				white-space: nowrap;
+				pointer-events: none;
+				opacity: 0;
+				transition: opacity 0.2s;
+				margin-bottom: 5px;
+			}
+
+			.histogram-bin:hover .histogram-tooltip {
+				opacity: 1;
+			}
+
+			.histogram-axis {
+				display: flex;
+				justify-content: space-between;
+				margin-top: 10px;
+				font-size: 11px;
+				color: var(--text-muted);
+			}
+
+			.histogram-stats {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+				gap: 15px;
+				margin-top: 15px;
+				padding: 15px;
+				background: var(--bg-primary);
+				border-radius: 4px;
+			}
+
+			.histogram-stat {
+				text-align: center;
+			}
+
+			.histogram-stat-value {
+				font-size: 20px;
+				font-weight: bold;
+				color: var(--accent-green);
+			}
+
+			.histogram-stat-label {
+				font-size: 12px;
+				color: var(--text-secondary);
+				margin-top: 3px;
+			}
+
+			.loading {
+				text-align: center;
+				padding: 40px;
+				color: var(--text-secondary);
+			}
+
+			.no-results {
+				text-align: center;
+				padding: 40px;
+				color: var(--text-muted);
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>🌌 Star & Exoplanet Catalog Explorer</h1>
+			<div class="subtitle">Explore the HYG Database and Exoplanet.eu Catalog</div>
+
+			<!-- Dataset Tabs -->
+			<div class="tabs">
+				<button class="tab active" data-dataset="stars">Stars (HYG)</button>
+				<button class="tab" data-dataset="exoplanets">Exoplanets</button>
+				<button class="tab" data-dataset="matched">Stars with Exoplanets</button>
+			</div>
+
+			<!-- Filters -->
+			<div class="filters-section">
+				<div class="filter-header">
+					<input
+						type="text"
+						class="search-input"
+						id="searchInput"
+						placeholder="Search stars by name, constellation, spectral type..."
+						style="flex: 1; margin-right: 20px"
+					/>
+					<button class="expand-btn" id="filterFieldsBtn" style="margin-right: 10px">
+						📊 Filter Fields
+					</button>
+					<button class="expand-btn" id="expandFiltersBtn">▼ Filters</button>
+				</div>
+				<div class="filters-grid" id="filtersGrid"></div>
+			</div>
+
+			<!-- Results Table -->
+			<div class="results-section">
+				<div
+					style="
+						display: flex;
+						justify-content: space-between;
+						align-items: center;
+						margin-bottom: 15px;
+					"
+				>
+					<h3 style="margin: 0; color: var(--accent-blue)">Results</h3>
+					<div class="stat">
+						<span class="stat-value" id="resultCount">0</span>
+						<span class="stat-label">/ <span id="totalCount">0</span> results</span>
+					</div>
+					<div style="display: flex; gap: 10px">
+						<div class="download-container">
+							<button
+								class="field-selector-btn"
+								id="downloadBtn"
+								title="Download Data"
+							>
+								💾 Download
+							</button>
+							<div class="download-menu" id="downloadMenu">
+								<button class="download-option" id="downloadJSON">📄 JSON</button>
+								<button class="download-option" id="downloadCSV">📊 CSV</button>
+							</div>
+						</div>
+						<button
+							class="field-selector-btn"
+							id="selectFieldsBtn"
+							title="Select Fields to Display"
+						>
+							⚙️ Fields
+						</button>
+					</div>
+				</div>
+				<div id="loadingMessage" class="loading">Loading data...</div>
+				<table class="results-table" id="resultsTable" style="display: none">
+					<thead id="tableHead"></thead>
+					<tbody id="tableBody"></tbody>
+				</table>
+				<div
+					id="endMessage"
+					class="no-results"
+					style="display: none; padding: 20px; text-align: center"
+				>
+					🎯 All results displayed
+				</div>
+				<div id="loadingMore" class="loading" style="display: none; padding: 10px">
+					Loading more results...
+				</div>
+			</div>
+		</div>
+
+		<!-- Field Selector Modal -->
+		<div class="modal" id="fieldModal">
+			<div class="modal-content">
+				<div class="modal-header">
+					<div class="modal-title">Select Fields to Display</div>
+					<button class="close-btn" id="closeModal">&times;</button>
+				</div>
+				<div class="field-checkboxes" id="fieldCheckboxes"></div>
+			</div>
+		</div>
+
+		<!-- Filter Fields Modal -->
+		<div class="modal" id="filterFieldsModal">
+			<div class="modal-content">
+				<div class="modal-header">
+					<div class="modal-title">Select Fields for Filtering</div>
+					<button class="close-btn" id="closeFilterFieldsModal">&times;</button>
+				</div>
+				<div style="margin-bottom: 15px; text-align: center">
+					<button
+						class="expand-btn"
+						id="selectAllFilterFields"
+						style="margin-right: 10px"
+					>
+						Select All
+					</button>
+					<button
+						class="expand-btn"
+						id="deselectAllFilterFields"
+						style="background: var(--bg-tertiary); color: var(--text-primary)"
+					>
+						Deselect All
+					</button>
+				</div>
+				<div class="field-checkboxes" id="filterFieldCheckboxes"></div>
+			</div>
+		</div>
+
+		<script type="module">
+			import Fuse from '../lib/fuse.mjs';
+
+			// State
+			let currentDataset = 'stars';
+			let allData = { stars: [], exoplanets: [], matched: [] };
+			let filteredData = [];
+			let fuse = null;
+
+			// Configuration for each dataset
+			const datasetConfig = {
+				stars: {
+					file: './hygdata_v42.csv.gz',
+					compressed: true,
+					searchKeys: ['proper', 'bf', 'con', 'spect'],
+					defaultFields: [
+						'proper',
+						'bf',
+						'con',
+						'dist',
+						'mag',
+						'spect',
+						'ra',
+						'dec',
+					],
+					filters: [
+						{ key: 'dist', type: 'range' },
+						{ key: 'mag', type: 'range' },
+						{ key: 'absmag', type: 'range' },
+						{ key: 'lum', type: 'range' },
+					],
+
+					placeholder: 'Search stars by name, constellation, spectral type...',
+				},
+				exoplanets: {
+					file: './exoplanet.eu_catalog_27-10-25_21_43_16.csv',
+					searchKeys: ['name', 'star_name', 'detection_type', 'star_sp_type'],
+					defaultFields: [
+						'name',
+						'star_name',
+						'mass',
+						'radius',
+						'orbital_period',
+						'star_distance',
+						'discovered',
+						'detection_type',
+					],
+					filters: [
+						{ key: 'mass', type: 'range' },
+						{ key: 'radius', type: 'range' },
+						{ key: 'orbital_period', type: 'range' },
+						{ key: 'star_distance', type: 'range' },
+						{ key: 'discovered', type: 'range' },
+					],
+
+					placeholder: 'Search exoplanets by name, host star, detection method...',
+				},
+				matched: {
+					searchKeys: [
+						'proper',
+						'bf',
+						'star_name',
+						'name',
+						'con',
+						'spect',
+						'detection_type',
+					],
+					defaultFields: [
+						'proper',
+						'bf',
+						'star_name',
+						'name',
+						'dist',
+						'mag',
+						'mass',
+						'radius',
+						'orbital_period',
+						'discovered',
+						'detection_type',
+					],
+					filters: [
+						{ key: 'dist', type: 'range' },
+						{ key: 'mag', type: 'range' },
+						{ key: 'mass', type: 'range' },
+						{ key: 'radius', type: 'range' },
+						{ key: 'orbital_period', type: 'range' },
+						{ key: 'star_distance', type: 'range' },
+						{ key: 'discovered', type: 'range' },
+					],
+					placeholder:
+						'Search stars with exoplanets by name, constellation, planet properties...',
+				},
+			};
+
+			let visibleFields = { ...datasetConfig.stars.defaultFields };
+			let filterValues = {};
+			let onlyNamedStars = false;
+			let fieldHistograms = {}; // Store histogram data for all numeric fields
+			let debounceTimers = {}; // Store debounce timers for sliders
+			let selectedFilterFields = new Set(); // Store which fields are selected for filtering
+			let displayedRows = 0; // Track how many rows are currently displayed
+			const rowsPerPage = 100; // Number of rows to load at a time
+
+			// Field labels will be loaded from external JSON file
+			let fieldLabels = {};
+
+			// Helper function to get human-readable label
+			function getFieldLabel(field) {
+				return fieldLabels[field] ? fieldLabels[field].name : field;
+			}
+
+			// Helper function to get field unit
+			function getFieldUnit(field) {
+				return fieldLabels[field] ? fieldLabels[field].unit : '';
+			}
+
+			// Helper function to get field meaning
+			function getFieldMeaning(field) {
+				return fieldLabels[field] ? fieldLabels[field].meaning : '';
+			}
+
+			// Helper function to get field label with unit
+			function getFieldLabelWithUnit(field) {
+				const label = getFieldLabel(field);
+				const unit = getFieldUnit(field);
+				if (unit) {
+					return `${label} <span style="color: var(--text-muted); font-size: 0.9em">(${unit})</span>`;
+				}
+				return label;
+			}
+
+			// Match stars with exoplanets based on star names
+			function matchStarsWithExoplanets() {
+				const matchedData = [];
+
+				// Create a map of star names from HYG database for faster lookup
+				const starMap = new Map();
+				allData.stars.forEach((star) => {
+					// Create multiple lookup keys for each star
+					const keys = [];
+					if (star.proper && star.proper.trim())
+						keys.push(star.proper.trim().toLowerCase());
+					if (star.bf && star.bf.trim()) keys.push(star.bf.trim().toLowerCase());
+					if (star.hr && star.hr.trim()) keys.push(`HR ${star.hr}`.toLowerCase());
+					if (star.hd && star.hd.trim()) keys.push(`HD ${star.hd}`.toLowerCase());
+					if (star.hip && star.hip.trim())
+						keys.push(`HIP ${star.hip}`.toLowerCase());
+
+					keys.forEach((key) => {
+						if (!starMap.has(key)) {
+							starMap.set(key, star);
+						}
+					});
+				});
+
+				// Match exoplanets with stars
+				allData.exoplanets.forEach((exoplanet) => {
+					if (!exoplanet.star_name || !exoplanet.star_name.trim()) return;
+
+					const starName = exoplanet.star_name.trim().toLowerCase();
+					let matchedStar = null;
+
+					// Try direct match first
+					matchedStar = starMap.get(starName);
+
+					// Try variations if no direct match
+					if (!matchedStar) {
+						// Try with common prefixes/suffixes
+						const variations = [
+							starName.replace(/\s+/g, ''), // Remove spaces
+							starName.replace(/^hd\s*/i, 'HD '), // Normalize HD prefix
+							starName.replace(/^hr\s*/i, 'HR '), // Normalize HR prefix
+							starName.replace(/^hip\s*/i, 'HIP '), // Normalize HIP prefix
+							starName.replace(/\s*\w$/, ''), // Remove single letter suffix
+						];
+
+						for (const variation of variations) {
+							matchedStar = starMap.get(variation);
+							if (matchedStar) break;
+						}
+					}
+
+					if (matchedStar) {
+						// Combine star and exoplanet data
+						const combined = {
+							// Star data (prefixed to avoid conflicts)
+							...Object.fromEntries(
+								Object.entries(matchedStar).map(([key, value]) =>
+									exoplanet.hasOwnProperty(key) && key !== 'name'
+										? [`star_${key}`, value]
+										: [key, value],
+								),
+							),
+							// Exoplanet data (overwrites any conflicting star fields except 'name')
+							...exoplanet,
+							// Ensure we keep both names clearly
+							star_proper: matchedStar.proper || '',
+							star_bf: matchedStar.bf || '',
+							planet_name: exoplanet.name || '',
+						};
+
+						matchedData.push(combined);
+					}
+				});
+
+				console.log(`Matched ${matchedData.length} exoplanets with HYG stars`);
+				return matchedData;
+			}
+
+			// Parse CSV
+			function parseCSV(text) {
+				const lines = text.trim().split('\n');
+				const headersRaw = parseCSVLine(lines[0]);
+				// Remove quotes from header names
+				const headers = headersRaw.map((h) => h.replace(/^"|"$/g, ''));
+				const data = [];
+
+				for (let i = 1; i < lines.length; i++) {
+					if (!lines[i].trim()) continue;
+
+					const values = parseCSVLine(lines[i]);
+					const obj = {};
+					headers.forEach((header, idx) => {
+						const value = values[idx] || '';
+						// Remove quotes from string values
+						obj[header] = value.replace(/^"|"$/g, '');
+					});
+
+					// Parse numeric fields if they exist
+					if (obj.x) obj.x = parseFloat(obj.x) || 0;
+					if (obj.y) obj.y = parseFloat(obj.y) || 0;
+					if (obj.z) obj.z = parseFloat(obj.z) || 0;
+					if (obj.dist) obj.dist = parseFloat(obj.dist) || 0;
+					if (obj.mag) obj.mag = parseFloat(obj.mag) || 0;
+					if (obj.absmag) obj.absmag = parseFloat(obj.absmag) || 0;
+					if (obj.ra) obj.ra = parseFloat(obj.ra) || 0;
+					if (obj.dec) obj.dec = parseFloat(obj.dec) || 0;
+					if (obj.lum) obj.lum = parseFloat(obj.lum) || 0;
+					if (obj.ci) obj.ci = parseFloat(obj.ci) || 0;
+
+					// Parse exoplanet numeric fields
+					if (obj.mass) obj.mass = parseFloat(obj.mass) || 0;
+					if (obj.radius) obj.radius = parseFloat(obj.radius) || 0;
+					if (obj.orbital_period)
+						obj.orbital_period = parseFloat(obj.orbital_period) || 0;
+					if (obj.star_distance)
+						obj.star_distance = parseFloat(obj.star_distance) || 0;
+					if (obj.discovered) obj.discovered = parseFloat(obj.discovered) || 0;
+					if (obj.semi_major_axis)
+						obj.semi_major_axis = parseFloat(obj.semi_major_axis) || 0;
+					if (obj.eccentricity) obj.eccentricity = parseFloat(obj.eccentricity) || 0;
+					if (obj.inclination) obj.inclination = parseFloat(obj.inclination) || 0;
+					if (obj.star_mass) obj.star_mass = parseFloat(obj.star_mass) || 0;
+					if (obj.star_radius) obj.star_radius = parseFloat(obj.star_radius) || 0;
+					if (obj.star_teff) obj.star_teff = parseFloat(obj.star_teff) || 0;
+
+					data.push(obj);
+				}
+
+				return data;
+			}
+
+			function parseCSVLine(line) {
+				const result = [];
+				let current = '';
+				let inQuotes = false;
+
+				for (let i = 0; i < line.length; i++) {
+					const char = line[i];
+					if (char === '"') {
+						inQuotes = !inQuotes;
+						current += char;
+					} else if (char === ',' && !inQuotes) {
+						result.push(current);
+						current = '';
+					} else {
+						current += char;
+					}
+				}
+				result.push(current);
+				return result;
+			}
+
+			// Load field labels from external JSON file
+			async function loadFieldLabels() {
+				try {
+					const response = await fetch('./field-labels.json');
+					if (!response.ok) {
+						throw new Error(`Failed to fetch field labels: ${response.statusText}`);
+					}
+					fieldLabels = await response.json();
+				} catch (error) {
+					console.error('Error loading field labels:', error);
+					// Fallback to basic field names if JSON fails to load
+					fieldLabels = {};
+				}
+			}
+
+			// Load data
+			async function loadData() {
+				try {
+					// Load field labels first
+					document.getElementById('loadingMessage').textContent =
+						'Loading field labels...';
+					await loadFieldLabels();
+
+					// Load stars (gzipped)
+					document.getElementById('loadingMessage').textContent =
+						'Loading star data...';
+					const starsResponse = await fetch(datasetConfig.stars.file);
+					if (!starsResponse.ok) {
+						throw new Error(`Failed to fetch star data: ${starsResponse.statusText}`);
+					}
+
+					const compressedData = await starsResponse.arrayBuffer();
+					const ds = new DecompressionStream('gzip');
+					const decompressedStream = new Response(
+						new Blob([compressedData]).stream().pipeThrough(ds),
+					);
+					const starsText = await decompressedStream.text();
+					allData.stars = parseCSV(starsText);
+					console.log(`Loaded ${allData.stars.length} stars`);
+
+					// Load exoplanets (uncompressed CSV)
+					document.getElementById('loadingMessage').textContent =
+						'Loading exoplanet data...';
+					const exoplanetsResponse = await fetch(datasetConfig.exoplanets.file);
+					if (!exoplanetsResponse.ok) {
+						throw new Error(
+							`Failed to fetch exoplanet data: ${exoplanetsResponse.statusText}`,
+						);
+					}
+					const exoplanetsText = await exoplanetsResponse.text();
+					allData.exoplanets = parseCSV(exoplanetsText);
+					console.log(`Loaded ${allData.exoplanets.length} exoplanets`);
+
+					// Create matched dataset
+					document.getElementById('loadingMessage').textContent =
+						'Matching stars with exoplanets...';
+					allData.matched = matchStarsWithExoplanets();
+
+					document.getElementById('loadingMessage').style.display = 'none';
+					initializeDataset();
+				} catch (error) {
+					console.error('Error loading data:', error);
+					document.getElementById('loadingMessage').textContent =
+						`Error loading data: ${error.message}`;
+				}
+			}
+
+			// Calculate histogram data for a numeric field
+			function calculateHistogram(data, field, numBins = 20) {
+				const values = data
+					.map((item) => parseFloat(item[field]))
+					.filter((v) => !isNaN(v) && isFinite(v));
+
+				if (values.length === 0) return null;
+
+				const sorted = [...values].sort((a, b) => a - b);
+				const min = sorted[0];
+				const max = sorted[sorted.length - 1];
+
+				if (min === max) return null;
+
+				const binSize = (max - min) / numBins;
+				const bins = Array(numBins).fill(0);
+
+				values.forEach((v) => {
+					let binIndex = Math.floor((v - min) / binSize);
+					if (binIndex >= numBins) binIndex = numBins - 1;
+					bins[binIndex]++;
+				});
+
+				return {
+					bins,
+					min,
+					max,
+					binSize,
+				};
+			}
+
+			// Build histograms for all numeric filter fields
+			function buildFieldHistograms() {
+				fieldHistograms = {};
+
+				// Build histograms for all selected filter fields
+				selectedFilterFields.forEach((field) => {
+					const histogram = calculateHistogram(allData[currentDataset], field, 20);
+					if (histogram) {
+						fieldHistograms[field] = histogram;
+					}
+				});
+			}
+
+			// Update sparkline histogram with filtered data
+			function updateSparklineHistogram(field, minVal, maxVal) {
+				const sparkline = document.querySelector(`#filter-sparkline-${field}`);
+				if (!sparkline) return;
+
+				// Get filtered data based on current slider values
+				const filteredDataForHistogram = filteredData.filter((item) => {
+					const value = parseFloat(item[field]);
+					return !isNaN(value) && value >= minVal && value <= maxVal;
+				});
+
+				// Calculate histogram for filtered data
+				const histogram = calculateHistogram(filteredDataForHistogram, field, 20);
+				if (!histogram) return;
+
+				// Update sparkline bars
+				const bars = sparkline.querySelectorAll('.sparkline-bar');
+				const maxBinCount = Math.max(...histogram.bins);
+
+				histogram.bins.forEach((count, i) => {
+					if (bars[i]) {
+						const height = maxBinCount > 0 ? (count / maxBinCount) * 100 : 0;
+						bars[i].style.height = `${height}%`;
+					}
+				});
+			}
+
+			// Initialize dataset
+			function initializeDataset() {
+				const config = datasetConfig[currentDataset];
+				visibleFields = [...config.defaultFields];
+				filterValues = {};
+				onlyNamedStars = false;
+
+				// Reset selected filter fields to default
+				selectedFilterFields.clear();
+				config.filters.forEach((filter) => selectedFilterFields.add(filter.key));
+
+				// Update search placeholder
+				document.getElementById('searchInput').placeholder = config.placeholder;
+				document.getElementById('searchInput').value = '';
+
+				// Initialize Fuse
+				fuse = new Fuse(allData[currentDataset], {
+					keys: config.searchKeys,
+					threshold: 0.3,
+					ignoreLocation: true,
+				});
+
+				// Build histograms for filter fields
+				buildFieldHistograms();
+
+				// Build toggles
+				buildToggles();
+
+				// Build filters
+				buildFilters();
+
+				// Build field selector
+				buildFieldSelector();
+
+				// Build filter field selector
+				buildFilterFieldSelector();
+
+				// Initial render
+				applyFiltersAndSearch();
+			}
+
+			// Build toggles (now integrated into filters grid)
+			function buildToggles() {
+				// This is now handled within buildFilters()
+			}
+
+			// Build filters with range sliders and sparklines
+			function buildFilters() {
+				const config = datasetConfig[currentDataset];
+				const filtersGrid = document.getElementById('filtersGrid');
+				filtersGrid.innerHTML = '';
+
+				// Add named stars toggle for stars and matched datasets
+				if (currentDataset === 'stars' || currentDataset === 'matched') {
+					const toggleGroup = document.createElement('div');
+					toggleGroup.className = 'filter-group';
+
+					const label = document.createElement('div');
+					label.className = 'filter-label';
+					const labelText = document.createElement('span');
+					labelText.className = 'filter-label-text';
+					labelText.textContent = 'Named Stars Only';
+					label.appendChild(labelText);
+
+					const toggleContainer = document.createElement('div');
+					toggleContainer.className = 'toggle-group';
+					toggleContainer.style.justifyContent = 'center';
+					toggleContainer.style.padding = '10px 0';
+
+					const toggleLabel = document.createElement('label');
+					toggleLabel.className = 'toggle-switch';
+
+					const input = document.createElement('input');
+					input.type = 'checkbox';
+					input.id = 'namedStarsToggle';
+					input.checked = onlyNamedStars;
+					input.addEventListener('change', (e) => {
+						onlyNamedStars = e.target.checked;
+						applyFiltersAndSearch();
+					});
+
+					const slider = document.createElement('span');
+					slider.className = 'toggle-slider';
+
+					toggleLabel.appendChild(input);
+					toggleLabel.appendChild(slider);
+					toggleContainer.appendChild(toggleLabel);
+
+					toggleGroup.appendChild(label);
+					toggleGroup.appendChild(toggleContainer);
+					filtersGrid.appendChild(toggleGroup);
+				}
+
+				// Build filters for selected fields only
+				getAllNumericFields().forEach((field) => {
+					if (!selectedFilterFields.has(field)) return;
+
+					const histogram = fieldHistograms[field];
+					if (!histogram) return;
+
+					// Get human-readable label
+					const filterLabel = getFieldLabel(field);
+
+					buildFilterSlider(field, filterLabel, histogram);
+				});
+
+				// Always ensure Filter Fields button is at the end
+				ensureFilterFieldsButtonAtEnd();
+			}
+
+			// Get all numeric fields from the current dataset
+			function getAllNumericFields() {
+				if (!allData[currentDataset] || allData[currentDataset].length === 0)
+					return [];
+
+				const sample = allData[currentDataset][0];
+				return Object.keys(sample).filter((key) => {
+					const value = sample[key];
+					return !isNaN(parseFloat(value)) && isFinite(value);
+				});
+			}
+
+			// Build a single filter slider
+			function buildFilterSlider(filterKey, filterLabel, histogram) {
+				const filtersGrid = document.getElementById('filtersGrid');
+
+				const group = document.createElement('div');
+				group.className = 'filter-group';
+
+				// Field name on first line
+				const nameLabel = document.createElement('div');
+				nameLabel.className = 'filter-label-text';
+				nameLabel.style.fontWeight = 'bold';
+				nameLabel.style.marginBottom = '5px';
+				nameLabel.textContent = getFieldLabel(filterKey);
+
+				// Unit and values on second line
+				const unitAndValues = document.createElement('div');
+				unitAndValues.style.display = 'flex';
+				unitAndValues.style.justifyContent = 'space-between';
+				unitAndValues.style.alignItems = 'center';
+				unitAndValues.style.marginBottom = '5px';
+
+				// Unit on the left
+				const unitLabel = document.createElement('span');
+				unitLabel.style.color = 'var(--text-muted)';
+				unitLabel.style.fontSize = '0.9em';
+				const unit = getFieldUnit(filterKey);
+				unitLabel.textContent = unit ? `${unit}` : '';
+
+				// Min/Max values on the right
+				const labelValues = document.createElement('div');
+				labelValues.className = 'filter-label-values';
+				labelValues.id = `filter-values-${filterKey}`;
+				labelValues.style.display = 'flex';
+				labelValues.style.alignItems = 'center';
+				labelValues.style.gap = '4px';
+
+				const minInput = document.createElement('input');
+				minInput.type = 'number';
+				minInput.className = 'editable-value';
+				minInput.id = `min-input-${filterKey}`;
+				minInput.value = histogram.min.toFixed(2);
+				minInput.step = (histogram.max - histogram.min) / 1000;
+
+				const separator = document.createElement('span');
+				separator.textContent = ' - ';
+
+				const maxInput = document.createElement('input');
+				maxInput.type = 'number';
+				maxInput.className = 'editable-value';
+				maxInput.id = `max-input-${filterKey}`;
+				maxInput.value = histogram.max.toFixed(2);
+				maxInput.step = (histogram.max - histogram.min) / 1000;
+
+				labelValues.appendChild(minInput);
+				labelValues.appendChild(separator);
+				labelValues.appendChild(maxInput);
+
+				unitAndValues.appendChild(unitLabel);
+				unitAndValues.appendChild(labelValues);
+
+				// Sparkline histogram
+				const sparkline = document.createElement('div');
+				sparkline.className = 'filter-sparkline';
+				sparkline.id = `filter-sparkline-${filterKey}`;
+
+				const maxBinCount = Math.max(...histogram.bins);
+				histogram.bins.forEach((count) => {
+					const bar = document.createElement('div');
+					bar.className = 'sparkline-bar';
+					const height = maxBinCount > 0 ? (count / maxBinCount) * 100 : 0;
+					bar.style.height = `${height}%`;
+					sparkline.appendChild(bar);
+				});
+
+				// Range slider container
+				const sliderContainer = document.createElement('div');
+				sliderContainer.className = 'range-slider-container';
+
+				const track = document.createElement('div');
+				track.className = 'range-slider-track';
+
+				const range = document.createElement('div');
+				range.className = 'range-slider-range';
+				range.id = `range-${filterKey}`;
+
+				const minSlider = document.createElement('input');
+				minSlider.type = 'range';
+				minSlider.className = 'range-slider-input';
+				minSlider.id = `min-${filterKey}`;
+				minSlider.min = histogram.min;
+				minSlider.max = histogram.max;
+				minSlider.value = histogram.min;
+				minSlider.step = (histogram.max - histogram.min) / 1000;
+				minSlider.dataset.key = filterKey;
+				minSlider.dataset.type = 'min';
+
+				const maxSlider = document.createElement('input');
+				maxSlider.type = 'range';
+				maxSlider.className = 'range-slider-input';
+				maxSlider.id = `max-${filterKey}`;
+				maxSlider.min = histogram.min;
+				maxSlider.max = histogram.max;
+				maxSlider.value = histogram.max;
+				maxSlider.step = (histogram.max - histogram.min) / 1000;
+				maxSlider.dataset.key = filterKey;
+				maxSlider.dataset.type = 'max';
+
+				// Update range display and filter with debouncing
+				const updateRange = () => {
+					let minVal = parseFloat(minSlider.value);
+					let maxVal = parseFloat(maxSlider.value);
+
+					// Ensure min doesn't exceed max
+					if (minVal > maxVal) {
+						const temp = minVal;
+						minVal = maxVal;
+						maxVal = temp;
+					}
+
+					minSlider.value = minVal;
+					maxSlider.value = maxVal;
+
+					// Update visual range indicator
+					const percent1 =
+						((minVal - histogram.min) / (histogram.max - histogram.min)) * 100;
+					const percent2 =
+						((maxVal - histogram.min) / (histogram.max - histogram.min)) * 100;
+					range.style.left = `${percent1}%`;
+					range.style.width = `${percent2 - percent1}%`;
+
+					// Update input values
+					const minInput = document.getElementById(`min-input-${filterKey}`);
+					const maxInput = document.getElementById(`max-input-${filterKey}`);
+					if (minInput) minInput.value = minVal.toFixed(2);
+					if (maxInput) maxInput.value = maxVal.toFixed(2);
+
+					// Store filter values
+					if (minVal === histogram.min && maxVal === histogram.max) {
+						// Reset filter if at extremes
+						delete filterValues[filterKey];
+					} else {
+						filterValues[filterKey] = { min: minVal, max: maxVal };
+					}
+
+					// Clear existing debounce timer
+					if (debounceTimers[filterKey]) {
+						clearTimeout(debounceTimers[filterKey]);
+					}
+
+					// Set new debounce timer
+					debounceTimers[filterKey] = setTimeout(() => {
+						applyFiltersAndSearch();
+						updateSparklineHistogram(filterKey, minVal, maxVal);
+					}, 250);
+				};
+
+				minSlider.addEventListener('input', updateRange);
+				maxSlider.addEventListener('input', updateRange);
+
+				// Add event listeners for editable inputs
+				if (minInput) {
+					minInput.addEventListener('change', () => {
+						let newMin = parseFloat(minInput.value);
+						if (isNaN(newMin)) {
+							newMin = histogram.min;
+							minInput.value = newMin.toFixed(2);
+						}
+						// Clamp to valid range
+						newMin = Math.max(histogram.min, Math.min(newMin, histogram.max));
+						minSlider.value = newMin;
+						updateRange();
+					});
+
+					minInput.addEventListener('keydown', (e) => {
+						if (e.key === 'Enter') {
+							minInput.blur();
+						}
+					});
+				}
+
+				if (maxInput) {
+					maxInput.addEventListener('change', () => {
+						let newMax = parseFloat(maxInput.value);
+						if (isNaN(newMax)) {
+							newMax = histogram.max;
+							maxInput.value = newMax.toFixed(2);
+						}
+						// Clamp to valid range
+						newMax = Math.max(histogram.min, Math.min(newMax, histogram.max));
+						maxSlider.value = newMax;
+						updateRange();
+					});
+
+					maxInput.addEventListener('keydown', (e) => {
+						if (e.key === 'Enter') {
+							maxInput.blur();
+						}
+					});
+				}
+
+				sliderContainer.appendChild(track);
+				sliderContainer.appendChild(range);
+				sliderContainer.appendChild(minSlider);
+				sliderContainer.appendChild(maxSlider);
+
+				// Add meaning text between sparkline and slider
+				const meaning = getFieldMeaning(filterKey);
+				if (meaning) {
+					const meaningDiv = document.createElement('div');
+					meaningDiv.style.fontSize = '11px';
+					meaningDiv.style.color = 'var(--text-muted)';
+					meaningDiv.style.padding = '5px 0';
+					meaningDiv.style.lineHeight = '1.3';
+					meaningDiv.textContent = meaning;
+					group.appendChild(nameLabel);
+					group.appendChild(unitAndValues);
+					group.appendChild(sparkline);
+					group.appendChild(meaningDiv);
+					group.appendChild(sliderContainer);
+				} else {
+					group.appendChild(nameLabel);
+					group.appendChild(unitAndValues);
+					group.appendChild(sparkline);
+					group.appendChild(sliderContainer);
+				}
+				filtersGrid.appendChild(group);
+
+				// Initialize range display
+				range.style.left = '0%';
+				range.style.width = '100%';
+			}
+
+			// Ensure Filter Fields button is always at the end of filter grid
+			function ensureFilterFieldsButtonAtEnd() {
+				const filtersGrid = document.getElementById('filtersGrid');
+				let existingButton = document.getElementById('filterFieldsBtn');
+
+				// Remove existing button container if it exists
+				const existingContainer = document.querySelector(
+					'.filter-fields-button-container',
+				);
+				if (existingContainer) {
+					existingContainer.remove();
+				}
+
+				// If button is in header, move it; if it doesn't exist, create it
+				if (!existingButton) {
+					existingButton = document.createElement('button');
+					existingButton.className = 'expand-btn';
+					existingButton.id = 'filterFieldsBtn';
+					existingButton.textContent = '📊 Filter Fields';
+					existingButton.style.marginRight = '10px';
+				}
+
+				// Create container for button in grid
+				const buttonContainer = document.createElement('div');
+				buttonContainer.className = 'filter-group filter-fields-button-container';
+				buttonContainer.style.display = 'flex';
+				buttonContainer.style.alignItems = 'center';
+				buttonContainer.style.justifyContent = 'center';
+				buttonContainer.style.padding = '20px 0';
+
+				// Style button for grid
+				existingButton.style.width = '100%';
+				existingButton.style.marginRight = '0';
+
+				buttonContainer.appendChild(existingButton);
+				filtersGrid.appendChild(buttonContainer);
+			}
+
+			// Build field selector
+			function buildFieldSelector() {
+				const config = datasetConfig[currentDataset];
+				const container = document.getElementById('fieldCheckboxes');
+				container.innerHTML = '';
+
+				// Get all fields from first item
+				const fields = Object.keys(allData[currentDataset][0] || {});
+
+				fields.forEach((field) => {
+					const div = document.createElement('div');
+					div.className = 'field-checkbox';
+
+					const checkbox = document.createElement('input');
+					checkbox.type = 'checkbox';
+					checkbox.id = `field-${field}`;
+					checkbox.value = field;
+					checkbox.checked = visibleFields.includes(field);
+					checkbox.addEventListener('change', () => {
+						if (checkbox.checked) {
+							if (!visibleFields.includes(field)) {
+								visibleFields.push(field);
+							}
+						} else {
+							visibleFields = visibleFields.filter((f) => f !== field);
+						}
+						renderResults(filteredData);
+					});
+
+					const label = document.createElement('label');
+					label.htmlFor = `field-${field}`;
+					label.innerHTML = getFieldLabelWithUnit(field);
+
+					div.appendChild(checkbox);
+					div.appendChild(label);
+					container.appendChild(div);
+				});
+			}
+
+			// Build filter field selector
+			function buildFilterFieldSelector() {
+				const container = document.getElementById('filterFieldCheckboxes');
+				container.innerHTML = '';
+
+				// Get all numeric fields
+				const numericFields = getAllNumericFields();
+
+				numericFields.forEach((field) => {
+					const div = document.createElement('div');
+					div.className = 'field-checkbox';
+
+					const checkbox = document.createElement('input');
+					checkbox.type = 'checkbox';
+					checkbox.id = `filter-field-${field}`;
+					checkbox.value = field;
+					checkbox.checked = selectedFilterFields.has(field);
+					checkbox.addEventListener('change', () => {
+						if (checkbox.checked) {
+							selectedFilterFields.add(field);
+						} else {
+							selectedFilterFields.delete(field);
+							// Remove any existing filter values for this field
+							delete filterValues[field];
+						}
+						// Rebuild histograms and filters
+						buildFieldHistograms();
+						buildFilters();
+						applyFiltersAndSearch();
+					});
+
+					const label = document.createElement('label');
+					label.htmlFor = `filter-field-${field}`;
+					label.innerHTML = getFieldLabelWithUnit(field);
+
+					div.appendChild(checkbox);
+					div.appendChild(label);
+					container.appendChild(div);
+				});
+			}
+
+			// Apply filters and search
+			function applyFiltersAndSearch() {
+				const searchQuery = document.getElementById('searchInput').value;
+				let data = allData[currentDataset];
+
+				// Apply named stars filter (only for stars dataset)
+				if (currentDataset === 'stars' && onlyNamedStars) {
+					data = data.filter((item) => {
+						const hasProper = item.proper && item.proper.trim() !== '';
+						const hasBf = item.bf && item.bf.trim() !== '';
+						return hasProper || hasBf;
+					});
+				}
+
+				// Apply search
+				if (searchQuery) {
+					const results = fuse.search(searchQuery);
+					data = results.map((r) => r.item);
+				}
+
+				// Apply range filters from sliders
+				data = data.filter((item) => {
+					for (const [key, range] of Object.entries(filterValues)) {
+						const value = parseFloat(item[key]);
+						if (isNaN(value)) return false;
+						if (range.min !== undefined && value < range.min) return false;
+						if (range.max !== undefined && value > range.max) return false;
+					}
+					return true;
+				});
+
+				filteredData = data;
+				renderResults(data);
+				updateStats(data.length);
+			}
+
+			// Render results
+			function renderResults(data) {
+				const table = document.getElementById('resultsTable');
+				const thead = document.getElementById('tableHead');
+				const tbody = document.getElementById('tableBody');
+				const endMessage = document.getElementById('endMessage');
+				const loadingMore = document.getElementById('loadingMore');
+
+				// Hide all additional elements initially
+				endMessage.style.display = 'none';
+				loadingMore.style.display = 'none';
+
+				if (data.length === 0) {
+					table.style.display = 'none';
+					document.getElementById('loadingMessage').style.display = 'block';
+					document.getElementById('loadingMessage').className = 'no-results';
+					document.getElementById('loadingMessage').textContent = 'No results found';
+					displayedRows = 0;
+					return;
+				}
+
+				document.getElementById('loadingMessage').style.display = 'none';
+				table.style.display = 'table';
+
+				// Build header
+				thead.innerHTML = '';
+				const headerRow = document.createElement('tr');
+				visibleFields.forEach((field) => {
+					const th = document.createElement('th');
+					th.innerHTML = getFieldLabelWithUnit(field);
+					headerRow.appendChild(th);
+				});
+				thead.appendChild(headerRow);
+
+				// Reset and build initial rows
+				tbody.innerHTML = '';
+				displayedRows = 0;
+				loadMoreRows(data);
+			}
+
+			// Load more rows for endless scrolling
+			function loadMoreRows(data) {
+				const tbody = document.getElementById('tableBody');
+				const endMessage = document.getElementById('endMessage');
+				const loadingMore = document.getElementById('loadingMore');
+
+				const startIndex = displayedRows;
+				const endIndex = Math.min(startIndex + rowsPerPage, data.length);
+				const newRows = data.slice(startIndex, endIndex);
+
+				newRows.forEach((item) => {
+					const row = document.createElement('tr');
+					visibleFields.forEach((field) => {
+						const td = document.createElement('td');
+						td.textContent = item[field] || '';
+						row.appendChild(td);
+					});
+					tbody.appendChild(row);
+				});
+
+				displayedRows = endIndex;
+
+				// Show end message if all data is displayed
+				if (displayedRows >= data.length) {
+					endMessage.style.display = 'block';
+					loadingMore.style.display = 'none';
+				} else {
+					endMessage.style.display = 'none';
+				}
+			}
+
+			// Update stats
+			function updateStats(count) {
+				document.getElementById('resultCount').textContent = count;
+				document.getElementById('totalCount').textContent =
+					allData[currentDataset].length;
+			}
+
+			// Event listeners
+			document.querySelectorAll('.tab').forEach((tab) => {
+				tab.addEventListener('click', () => {
+					document
+						.querySelectorAll('.tab')
+						.forEach((t) => t.classList.remove('active'));
+					tab.classList.add('active');
+					currentDataset = tab.dataset.dataset;
+					initializeDataset();
+				});
+			});
+
+			document
+				.getElementById('searchInput')
+				.addEventListener('input', applyFiltersAndSearch);
+
+			document.getElementById('closeModal').addEventListener('click', () => {
+				document.getElementById('fieldModal').classList.remove('active');
+			});
+
+			document.getElementById('fieldModal').addEventListener('click', (e) => {
+				if (e.target === document.getElementById('fieldModal')) {
+					document.getElementById('fieldModal').classList.remove('active');
+				}
+			});
+
+			// Filter Fields Modal event listeners
+			document
+				.getElementById('closeFilterFieldsModal')
+				.addEventListener('click', () => {
+					document.getElementById('filterFieldsModal').classList.remove('active');
+				});
+
+			document
+				.getElementById('filterFieldsModal')
+				.addEventListener('click', (e) => {
+					if (e.target === document.getElementById('filterFieldsModal')) {
+						document.getElementById('filterFieldsModal').classList.remove('active');
+					}
+				});
+
+			// Select Fields button event listener
+			document.getElementById('selectFieldsBtn').addEventListener('click', () => {
+				document.getElementById('fieldModal').classList.add('active');
+			});
+
+			// Download functionality
+			function downloadData(format) {
+				if (filteredData.length === 0) {
+					alert('No data to download');
+					return;
+				}
+
+				// Filter data to only include visible fields
+				const exportData = filteredData.map((item) => {
+					const filtered = {};
+					visibleFields.forEach((field) => {
+						filtered[field] = item[field] || '';
+					});
+					return filtered;
+				});
+
+				let content, filename, mimeType;
+
+				if (format === 'json') {
+					content = JSON.stringify(exportData, null, 2);
+					filename = `${currentDataset}_data_${new Date().toISOString().split('T')[0]}.json`;
+					mimeType = 'application/json';
+				} else if (format === 'csv') {
+					// Create CSV header
+					const headers = visibleFields;
+					let csv = headers.join(',') + '\n';
+
+					// Add data rows
+					exportData.forEach((item) => {
+						const row = headers.map((header) => {
+							const value = item[header] || '';
+							// Escape commas and quotes in CSV
+							if (
+								typeof value === 'string' &&
+								(value.includes(',') || value.includes('"') || value.includes('\n'))
+							) {
+								return '"' + value.replace(/"/g, '""') + '"';
+							}
+							return value;
+						});
+						csv += row.join(',') + '\n';
+					});
+
+					content = csv;
+					filename = `${currentDataset}_data_${new Date().toISOString().split('T')[0]}.csv`;
+					mimeType = 'text/csv';
+				}
+
+				// Create and trigger download
+				const blob = new Blob([content], { type: mimeType });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = filename;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				URL.revokeObjectURL(url);
+			}
+
+			// Download button event listeners
+			document.getElementById('downloadBtn').addEventListener('click', (e) => {
+				e.stopPropagation();
+				const menu = document.getElementById('downloadMenu');
+				menu.classList.toggle('active');
+			});
+
+			document.getElementById('downloadJSON').addEventListener('click', () => {
+				downloadData('json');
+				document.getElementById('downloadMenu').classList.remove('active');
+			});
+
+			document.getElementById('downloadCSV').addEventListener('click', () => {
+				downloadData('csv');
+				document.getElementById('downloadMenu').classList.remove('active');
+			});
+
+			// Close download menu when clicking outside
+			document.addEventListener('click', (e) => {
+				if (!e.target.closest('.download-container')) {
+					document.getElementById('downloadMenu').classList.remove('active');
+				}
+			});
+
+			// Filter Fields button event listener (use event delegation since button moves)
+			document.body.addEventListener('click', (e) => {
+				if (e.target && e.target.id === 'filterFieldsBtn') {
+					document.getElementById('filterFieldsModal').classList.add('active');
+				}
+			});
+
+			// Select All / Deselect All filter fields buttons
+			document
+				.getElementById('selectAllFilterFields')
+				.addEventListener('click', () => {
+					const checkboxes = document.querySelectorAll(
+						'#filterFieldCheckboxes input[type="checkbox"]',
+					);
+					checkboxes.forEach((checkbox) => {
+						if (!checkbox.checked) {
+							checkbox.checked = true;
+							selectedFilterFields.add(checkbox.value);
+						}
+					});
+					buildFieldHistograms();
+					buildFilters();
+					applyFiltersAndSearch();
+				});
+
+			document
+				.getElementById('deselectAllFilterFields')
+				.addEventListener('click', () => {
+					const checkboxes = document.querySelectorAll(
+						'#filterFieldCheckboxes input[type="checkbox"]',
+					);
+					checkboxes.forEach((checkbox) => {
+						if (checkbox.checked) {
+							checkbox.checked = false;
+							selectedFilterFields.delete(checkbox.value);
+							delete filterValues[checkbox.value];
+						}
+					});
+					buildFieldHistograms();
+					buildFilters();
+					applyFiltersAndSearch();
+				});
+
+			// Expand/Collapse filters button event listener
+			document.getElementById('expandFiltersBtn').addEventListener('click', () => {
+				const filtersGrid = document.getElementById('filtersGrid');
+				const btn = document.getElementById('expandFiltersBtn');
+
+				if (filtersGrid.style.display === 'none') {
+					filtersGrid.style.display = 'grid';
+					btn.textContent = '▼ Filters';
+				} else {
+					filtersGrid.style.display = 'none';
+					btn.textContent = '▶ Filters';
+				}
+			});
+
+			// Endless scrolling functionality
+			function setupEndlessScrolling() {
+				const resultsSection = document.querySelector('.results-section');
+
+				resultsSection.addEventListener('scroll', () => {
+					const { scrollTop, scrollHeight, clientHeight } = resultsSection;
+					const isNearBottom = scrollTop + clientHeight >= scrollHeight - 200;
+
+					if (isNearBottom && displayedRows < filteredData.length) {
+						const loadingMore = document.getElementById('loadingMore');
+						loadingMore.style.display = 'block';
+
+						// Add small delay to show loading indicator
+						setTimeout(() => {
+							loadMoreRows(filteredData);
+							loadingMore.style.display = 'none';
+						}, 200);
+					}
+				});
+			}
+
+			// Initialize
+			loadData();
+			setupEndlessScrolling();
+		</script>
+	</body>
+</html>

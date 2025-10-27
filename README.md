@@ -10,6 +10,13 @@ If you like to imporve this project, feel free to create a pull request.
 
 Live demo: [select.github.io/universe](https://select.github.io/universe)
 
+
+## Datasets
+- https://exoplanet.eu/catalog/#downloads-section
+- https://www.projectrho.com/public_html/starmaps/catalogues.php
+- https://astronexus.com/projects/hyg
+
+
 ## Features
 
 ### Interactive Solar System (`index.html`)

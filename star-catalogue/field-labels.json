@@ -1,0 +1,667 @@
+{
+  "id": {
+    "name": "ID",
+    "unit": "",
+    "meaning": "Internal sequential star ID used in HYG"
+  },
+  "hip": {
+    "name": "HIP",
+    "unit": "",
+    "meaning": "Identifier from the Hipparcos Catalogue"
+  },
+  "hd": {
+    "name": "HD",
+    "unit": "",
+    "meaning": "Entry number in the Henry Draper Catalogue"
+  },
+  "hr": {
+    "name": "HR",
+    "unit": "",
+    "meaning": "Harvard Revised (Bright Star Catalogue) number"
+  },
+  "gl": {
+    "name": "Gliese",
+    "unit": "",
+    "meaning": "Identifier from the Gliese Catalogue"
+  },
+  "bf": {
+    "name": "Bayer-Flamsteed",
+    "unit": "",
+    "meaning": "Standard Bayer or Flamsteed designation"
+  },
+  "proper": {
+    "name": "Proper Name",
+    "unit": "",
+    "meaning": "Common or traditional star name"
+  },
+  "ra": {
+    "name": "Right Ascension",
+    "unit": "degrees",
+    "meaning": "Right Ascension in degrees (J2000 epoch)"
+  },
+  "dec": {
+    "name": "Declination",
+    "unit": "degrees",
+    "meaning": "Declination in degrees (J2000 epoch)"
+  },
+  "dist": {
+    "name": "Distance",
+    "unit": "light-years",
+    "meaning": "Distance from Earth in light-years"
+  },
+  "pmra": {
+    "name": "PM RA",
+    "unit": "mas/yr",
+    "meaning": "Proper motion in Right Ascension"
+  },
+  "pmdec": {
+    "name": "PM Dec",
+    "unit": "mas/yr",
+    "meaning": "Proper motion in Declination"
+  },
+  "rv": {
+    "name": "Radial Velocity",
+    "unit": "km/s",
+    "meaning": "Radial velocity relative to Sun"
+  },
+  "mag": {
+    "name": "Apparent Magnitude",
+    "unit": "mag",
+    "meaning": "Apparent magnitude (brightness from Earth)"
+  },
+  "absmag": {
+    "name": "Absolute Magnitude",
+    "unit": "mag",
+    "meaning": "Absolute magnitude (intrinsic brightness)"
+  },
+  "spect": {
+    "name": "Spectral Type",
+    "unit": "",
+    "meaning": "Spectral classification (temperature & luminosity class)"
+  },
+  "ci": {
+    "name": "Color Index",
+    "unit": "mag",
+    "meaning": "B–V color index (measure of color/temperature)"
+  },
+  "x": {
+    "name": "X Coordinate",
+    "unit": "parsecs",
+    "meaning": "Cartesian X coordinate (Galactic frame, Sun at origin)"
+  },
+  "y": {
+    "name": "Y Coordinate",
+    "unit": "parsecs",
+    "meaning": "Cartesian Y coordinate"
+  },
+  "z": {
+    "name": "Z Coordinate",
+    "unit": "parsecs",
+    "meaning": "Cartesian Z coordinate"
+  },
+  "vx": {
+    "name": "X Velocity",
+    "unit": "pc/yr",
+    "meaning": "Velocity component in X direction"
+  },
+  "vy": {
+    "name": "Y Velocity",
+    "unit": "pc/yr",
+    "meaning": "Velocity component in Y direction"
+  },
+  "vz": {
+    "name": "Z Velocity",
+    "unit": "pc/yr",
+    "meaning": "Velocity component in Z direction"
+  },
+  "rarad": {
+    "name": "RA",
+    "unit": "radians",
+    "meaning": "Right Ascension in radians"
+  },
+  "decrad": {
+    "name": "Dec",
+    "unit": "radians",
+    "meaning": "Declination in radians"
+  },
+  "pmrarad": {
+    "name": "PM RA",
+    "unit": "rad/yr",
+    "meaning": "Proper motion in RA converted to radians/year"
+  },
+  "pmdecrad": {
+    "name": "PM Dec",
+    "unit": "rad/yr",
+    "meaning": "Proper motion in Dec converted to radians/year"
+  },
+  "bayer": {
+    "name": "Bayer",
+    "unit": "",
+    "meaning": "Bayer Greek letter designation"
+  },
+  "flam": {
+    "name": "Flamsteed",
+    "unit": "",
+    "meaning": "Flamsteed number if available"
+  },
+  "con": {
+    "name": "Constellation",
+    "unit": "",
+    "meaning": "IAU abbreviation for constellation"
+  },
+  "comp": {
+    "name": "Component",
+    "unit": "",
+    "meaning": "Component index (for multiple star system)"
+  },
+  "comp_primary": {
+    "name": "Primary ID",
+    "unit": "",
+    "meaning": "ID number of the system's primary component"
+  },
+  "base": {
+    "name": "System Base",
+    "unit": "",
+    "meaning": "Common identifier for a binary/multiple system"
+  },
+  "lum": {
+    "name": "Luminosity",
+    "unit": "L☉",
+    "meaning": "Luminosity relative to the Sun"
+  },
+  "var": {
+    "name": "Variable Star",
+    "unit": "",
+    "meaning": "Variable star designation"
+  },
+  "var_min": {
+    "name": "Variable Min Mag",
+    "unit": "mag",
+    "meaning": "Minimum apparent magnitude observed"
+  },
+  "var_max": {
+    "name": "Variable Max Mag",
+    "unit": "mag",
+    "meaning": "Maximum apparent magnitude observed"
+  },
+  "name": {
+    "name": "Planet Name",
+    "unit": "",
+    "meaning": "Official planet designation"
+  },
+  "planet_status": {
+    "name": "Status",
+    "unit": "",
+    "meaning": "Confirmation status (e.g., \"Confirmed\")"
+  },
+  "mass": {
+    "name": "Mass",
+    "unit": "MJ",
+    "meaning": "True planetary mass"
+  },
+  "mass_error_min": {
+    "name": "Mass Error -",
+    "unit": "MJ",
+    "meaning": "Lower uncertainty on mass"
+  },
+  "mass_error_max": {
+    "name": "Mass Error +",
+    "unit": "MJ",
+    "meaning": "Upper uncertainty on mass"
+  },
+  "mass_sini": {
+    "name": "Mass·sin(i)",
+    "unit": "MJ",
+    "meaning": "Minimum mass (for RV detections)"
+  },
+  "mass_sini_error_min": {
+    "name": "Mass·sin(i) Error -",
+    "unit": "MJ",
+    "meaning": "Lower uncertainty on minimum mass"
+  },
+  "mass_sini_error_max": {
+    "name": "Mass·sin(i) Error +",
+    "unit": "MJ",
+    "meaning": "Upper uncertainty on minimum mass"
+  },
+  "radius": {
+    "name": "Radius",
+    "unit": "RJ",
+    "meaning": "Planetary radius"
+  },
+  "radius_error_min": {
+    "name": "Radius Error -",
+    "unit": "RJ",
+    "meaning": "Lower uncertainty on radius"
+  },
+  "radius_error_max": {
+    "name": "Radius Error +",
+    "unit": "RJ",
+    "meaning": "Upper uncertainty on radius"
+  },
+  "orbital_period": {
+    "name": "Orbital Period",
+    "unit": "days",
+    "meaning": "Orbital period around host star"
+  },
+  "orbital_period_error_min": {
+    "name": "Period Error -",
+    "unit": "days",
+    "meaning": "Lower uncertainty on period"
+  },
+  "orbital_period_error_max": {
+    "name": "Period Error +",
+    "unit": "days",
+    "meaning": "Upper uncertainty on period"
+  },
+  "semi_major_axis": {
+    "name": "Semi-major Axis",
+    "unit": "AU",
+    "meaning": "Average orbital distance from star"
+  },
+  "semi_major_axis_error_min": {
+    "name": "SMA Error -",
+    "unit": "AU",
+    "meaning": "Lower uncertainty on semi-major axis"
+  },
+  "semi_major_axis_error_max": {
+    "name": "SMA Error +",
+    "unit": "AU",
+    "meaning": "Upper uncertainty on semi-major axis"
+  },
+  "eccentricity": {
+    "name": "Eccentricity",
+    "unit": "",
+    "meaning": "Orbital shape (0=circular, >0=elliptical)"
+  },
+  "eccentricity_error_min": {
+    "name": "Ecc Error -",
+    "unit": "",
+    "meaning": "Lower uncertainty on eccentricity"
+  },
+  "eccentricity_error_max": {
+    "name": "Ecc Error +",
+    "unit": "",
+    "meaning": "Upper uncertainty on eccentricity"
+  },
+  "inclination": {
+    "name": "Inclination",
+    "unit": "degrees",
+    "meaning": "Orbital tilt relative to line of sight"
+  },
+  "inclination_error_min": {
+    "name": "Inc Error -",
+    "unit": "degrees",
+    "meaning": "Lower uncertainty on inclination"
+  },
+  "inclination_error_max": {
+    "name": "Inc Error +",
+    "unit": "degrees",
+    "meaning": "Upper uncertainty on inclination"
+  },
+  "angular_distance": {
+    "name": "Angular Distance",
+    "unit": "arcsec",
+    "meaning": "Angular separation from star as seen from Earth"
+  },
+  "omega": {
+    "name": "ω (Omega)",
+    "unit": "degrees",
+    "meaning": "Argument of periastron"
+  },
+  "omega_error_min": {
+    "name": "ω Error -",
+    "unit": "degrees",
+    "meaning": "Lower uncertainty on omega"
+  },
+  "omega_error_max": {
+    "name": "ω Error +",
+    "unit": "degrees",
+    "meaning": "Upper uncertainty on omega"
+  },
+  "tperi": {
+    "name": "T_peri",
+    "unit": "JD",
+    "meaning": "Time of periastron passage (closest approach)"
+  },
+  "tperi_error_min": {
+    "name": "T_peri Error -",
+    "unit": "JD",
+    "meaning": "Lower uncertainty on periastron time"
+  },
+  "tperi_error_max": {
+    "name": "T_peri Error +",
+    "unit": "JD",
+    "meaning": "Upper uncertainty on periastron time"
+  },
+  "tconj": {
+    "name": "T_conj",
+    "unit": "JD",
+    "meaning": "Time of conjunction"
+  },
+  "tconj_error_min": {
+    "name": "T_conj Error -",
+    "unit": "JD",
+    "meaning": "Lower uncertainty on conjunction time"
+  },
+  "tconj_error_max": {
+    "name": "T_conj Error +",
+    "unit": "JD",
+    "meaning": "Upper uncertainty on conjunction time"
+  },
+  "tzero_tr": {
+    "name": "T₀ Transit",
+    "unit": "JD",
+    "meaning": "Time of primary transit (planet crosses star)"
+  },
+  "tzero_tr_error_min": {
+    "name": "T₀ Transit Error -",
+    "unit": "JD",
+    "meaning": "Lower uncertainty on transit time"
+  },
+  "tzero_tr_error_max": {
+    "name": "T₀ Transit Error +",
+    "unit": "JD",
+    "meaning": "Upper uncertainty on transit time"
+  },
+  "tzero_tr_sec": {
+    "name": "T₀ Secondary",
+    "unit": "JD",
+    "meaning": "Time of secondary eclipse (star blocks planet)"
+  },
+  "tzero_tr_sec_error_min": {
+    "name": "T₀ Secondary Error -",
+    "unit": "JD",
+    "meaning": "Lower uncertainty on secondary eclipse time"
+  },
+  "tzero_tr_sec_error_max": {
+    "name": "T₀ Secondary Error +",
+    "unit": "JD",
+    "meaning": "Upper uncertainty on secondary eclipse time"
+  },
+  "tzero_vr": {
+    "name": "T₀ RV",
+    "unit": "JD",
+    "meaning": "Reference time for radial velocity measurements"
+  },
+  "tzero_vr_error_min": {
+    "name": "T₀ RV Error -",
+    "unit": "JD",
+    "meaning": "Lower uncertainty on RV reference time"
+  },
+  "tzero_vr_error_max": {
+    "name": "T₀ RV Error +",
+    "unit": "JD",
+    "meaning": "Upper uncertainty on RV reference time"
+  },
+  "lambda_angle": {
+    "name": "λ (Lambda)",
+    "unit": "degrees",
+    "meaning": "Sky-projected spin-orbit angle"
+  },
+  "lambda_angle_error_min": {
+    "name": "λ Error -",
+    "unit": "degrees",
+    "meaning": "Lower uncertainty on lambda"
+  },
+  "lambda_angle_error_max": {
+    "name": "λ Error +",
+    "unit": "degrees",
+    "meaning": "Upper uncertainty on lambda"
+  },
+  "impact_parameter": {
+    "name": "Impact Parameter",
+    "unit": "",
+    "meaning": "Projected distance during transit (0=center, 1=edge)"
+  },
+  "impact_parameter_error_min": {
+    "name": "b Error -",
+    "unit": "",
+    "meaning": "Lower uncertainty on impact parameter"
+  },
+  "impact_parameter_error_max": {
+    "name": "b Error +",
+    "unit": "",
+    "meaning": "Upper uncertainty on impact parameter"
+  },
+  "k": {
+    "name": "K",
+    "unit": "m/s",
+    "meaning": "Radial velocity semi-amplitude"
+  },
+  "k_error_min": {
+    "name": "K Error -",
+    "unit": "m/s",
+    "meaning": "Lower uncertainty on RV amplitude"
+  },
+  "k_error_max": {
+    "name": "K Error +",
+    "unit": "m/s",
+    "meaning": "Upper uncertainty on RV amplitude"
+  },
+  "temp_calculated": {
+    "name": "Temperature",
+    "unit": "K",
+    "meaning": "Equilibrium temperature (calculated)"
+  },
+  "temp_calculated_error_min": {
+    "name": "Temp Error -",
+    "unit": "K",
+    "meaning": "Lower uncertainty on calculated temperature"
+  },
+  "temp_calculated_error_max": {
+    "name": "Temp Error +",
+    "unit": "K",
+    "meaning": "Upper uncertainty on calculated temperature"
+  },
+  "temp_measured": {
+    "name": "Temperature",
+    "unit": "K",
+    "meaning": "Measured atmospheric temperature"
+  },
+  "hot_point_lon": {
+    "name": "Hot Point Longitude",
+    "unit": "degrees",
+    "meaning": "Longitude of hottest point on planet"
+  },
+  "geometric_albedo": {
+    "name": "Albedo",
+    "unit": "",
+    "meaning": "Fraction of light reflected by planet"
+  },
+  "geometric_albedo_error_min": {
+    "name": "Albedo Error -",
+    "unit": "",
+    "meaning": "Lower uncertainty on albedo"
+  },
+  "geometric_albedo_error_max": {
+    "name": "Albedo Error +",
+    "unit": "",
+    "meaning": "Upper uncertainty on albedo"
+  },
+  "log_g": {
+    "name": "log(g)",
+    "unit": "log(cm/s²)",
+    "meaning": "Surface gravity (logarithmic)"
+  },
+  "molecules": {
+    "name": "Detected Molecules",
+    "unit": "",
+    "meaning": "Atmospheric molecules detected spectroscopically"
+  },
+  "discovered": {
+    "name": "Discovery Year",
+    "unit": "year",
+    "meaning": "Year of discovery"
+  },
+  "updated": {
+    "name": "Last Update",
+    "unit": "",
+    "meaning": "Date of last catalog update"
+  },
+  "publication": {
+    "name": "Publication",
+    "unit": "",
+    "meaning": "Where findings were published"
+  },
+  "detection_type": {
+    "name": "Detection Method",
+    "unit": "",
+    "meaning": "Method(s) used to detect planet"
+  },
+  "mass_measurement_type": {
+    "name": "Mass Method",
+    "unit": "",
+    "meaning": "Method used to measure mass"
+  },
+  "radius_measurement_type": {
+    "name": "Radius Method",
+    "unit": "",
+    "meaning": "Method used to measure radius"
+  },
+  "alternate_names": {
+    "name": "Other Names",
+    "unit": "",
+    "meaning": "Alternative designations for the planet"
+  },
+  "star_name": {
+    "name": "Star Name",
+    "unit": "",
+    "meaning": "Host star designation"
+  },
+  "mag_v": {
+    "name": "V Magnitude",
+    "unit": "mag",
+    "meaning": "Visual magnitude (brightness in V band)"
+  },
+  "mag_i": {
+    "name": "I Magnitude",
+    "unit": "mag",
+    "meaning": "Magnitude in I band (near-infrared)"
+  },
+  "mag_j": {
+    "name": "J Magnitude",
+    "unit": "mag",
+    "meaning": "Magnitude in J band (infrared)"
+  },
+  "mag_h": {
+    "name": "H Magnitude",
+    "unit": "mag",
+    "meaning": "Magnitude in H band (infrared)"
+  },
+  "mag_k": {
+    "name": "K Magnitude",
+    "unit": "mag",
+    "meaning": "Magnitude in K band (infrared)"
+  },
+  "star_distance": {
+    "name": "Distance",
+    "unit": "parsecs",
+    "meaning": "Distance from Earth to star"
+  },
+  "star_distance_error_min": {
+    "name": "Distance Error -",
+    "unit": "parsecs",
+    "meaning": "Lower uncertainty on distance"
+  },
+  "star_distance_error_max": {
+    "name": "Distance Error +",
+    "unit": "parsecs",
+    "meaning": "Upper uncertainty on distance"
+  },
+  "star_metallicity": {
+    "name": "[Fe/H]",
+    "unit": "dex",
+    "meaning": "Metallicity relative to Sun (0=solar)"
+  },
+  "star_metallicity_error_min": {
+    "name": "[Fe/H] Error -",
+    "unit": "dex",
+    "meaning": "Lower uncertainty on metallicity"
+  },
+  "star_metallicity_error_max": {
+    "name": "[Fe/H] Error +",
+    "unit": "dex",
+    "meaning": "Upper uncertainty on metallicity"
+  },
+  "star_mass": {
+    "name": "Stellar Mass",
+    "unit": "M☉",
+    "meaning": "Mass of host star"
+  },
+  "star_mass_error_min": {
+    "name": "Mass Error -",
+    "unit": "M☉",
+    "meaning": "Lower uncertainty on stellar mass"
+  },
+  "star_mass_error_max": {
+    "name": "Mass Error +",
+    "unit": "M☉",
+    "meaning": "Upper uncertainty on stellar mass"
+  },
+  "star_radius": {
+    "name": "Stellar Radius",
+    "unit": "R☉",
+    "meaning": "Radius of host star"
+  },
+  "star_radius_error_min": {
+    "name": "Radius Error -",
+    "unit": "R☉",
+    "meaning": "Lower uncertainty on stellar radius"
+  },
+  "star_radius_error_max": {
+    "name": "Radius Error +",
+    "unit": "R☉",
+    "meaning": "Upper uncertainty on stellar radius"
+  },
+  "star_sp_type": {
+    "name": "Spectral Type",
+    "unit": "",
+    "meaning": "Star classification (temperature & luminosity)"
+  },
+  "star_age": {
+    "name": "Age",
+    "unit": "Gyr",
+    "meaning": "Age of host star"
+  },
+  "star_age_error_min": {
+    "name": "Age Error -",
+    "unit": "Gyr",
+    "meaning": "Lower uncertainty on stellar age"
+  },
+  "star_age_error_max": {
+    "name": "Age Error +",
+    "unit": "Gyr",
+    "meaning": "Upper uncertainty on stellar age"
+  },
+  "star_teff": {
+    "name": "T_eff",
+    "unit": "K",
+    "meaning": "Surface temperature of star"
+  },
+  "star_teff_error_min": {
+    "name": "T_eff Error -",
+    "unit": "K",
+    "meaning": "Lower uncertainty on temperature"
+  },
+  "star_teff_error_max": {
+    "name": "T_eff Error +",
+    "unit": "K",
+    "meaning": "Upper uncertainty on temperature"
+  },
+  "star_detected_disc": {
+    "name": "Debris Disc",
+    "unit": "",
+    "meaning": "Whether a debris disc has been detected"
+  },
+  "star_magnetic_field": {
+    "name": "Magnetic Field",
+    "unit": "",
+    "meaning": "Stellar magnetic field strength"
+  },
+  "star_alternate_names": {
+    "name": "Star Other Names",
+    "unit": "",
+    "meaning": "Alternative designations for the star"
+  }
+}
