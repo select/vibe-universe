@@ -1,5 +1,4 @@
 import { StarControls } from './star-controls.js?v=1';
-
 // Helper function to get coordinates from mouse or touch event
 function getEventCoordinates(event) {
 	if (event.touches && event.touches.length > 0) {
@@ -49,6 +48,7 @@ export function initStarMap(allStars) {
 		inclination: 60, // degrees
 		rotation: 0, // degrees
 		scale: 10, // pixels per light year
+		isAutoRotating: true, // auto-rotation state
 	};
 
 	// Drag control variables
@@ -62,6 +62,10 @@ export function initStarMap(allStars) {
 	// Pinch zoom variables
 	let isPinching = false;
 	let lastPinchDistance = 0;
+
+	// Auto-rotation variables
+	let lastFrameTime = Date.now();
+	const ROTATION_SPEED = 5; // degrees per second
 
 	// Snap points
 	const inclinationSnapPoints = [-60, -45, -30, 0, 30, 45, 60];
@@ -215,6 +219,34 @@ export function initStarMap(allStars) {
 		const normalized = Math.max(0, Math.min(1, (6 - mag) / 7));
 
 		return minSize + normalized * (maxSize - minSize);
+	}
+
+	// Auto-rotation animation loop
+	function animateRotation() {
+		if (state.isAutoRotating && !isDragging && !isPinching) {
+			const currentTime = Date.now();
+			const deltaTime = (currentTime - lastFrameTime) / 1000; // Convert to seconds
+			lastFrameTime = currentTime;
+
+			// Update rotation without snap points
+			state.rotation = (state.rotation + ROTATION_SPEED * deltaTime) % 360;
+
+			drawAxisLines();
+			drawStars();
+			controlsInstance.updateDisplays();
+		}
+
+		// Continue animation loop
+		requestAnimationFrame(animateRotation);
+	}
+
+	// Toggle auto-rotation
+	function toggleAutoRotation() {
+		state.isAutoRotating = !state.isAutoRotating;
+		if (state.isAutoRotating) {
+			lastFrameTime = Date.now();
+		}
+		return state.isAutoRotating;
 	}
 
 	// Draw all stars
@@ -415,4 +447,12 @@ export function initStarMap(allStars) {
 	// Initial draw
 	drawAxisLines();
 	drawStars();
+
+	// Start animation loop
+	animateRotation();
+
+	// Return toggle function for external control
+	return {
+		toggleAutoRotation: toggleAutoRotation,
+	};
 }

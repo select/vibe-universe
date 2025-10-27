@@ -77,6 +77,12 @@
 				/>
 			</div>
 
+			<div class="control-group">
+				<button id="autoRotateToggle" class="button-primary">
+					⏸️ Pause Auto-Rotation
+				</button>
+			</div>
+
 			<div class="control-group section-divider-small">
 				<a href="index.html" class="link-primary flex-row gap-small">
 					← Back to Solar System
@@ -96,7 +102,16 @@
 
 			// Load star data and initialize star map
 			loadStarData().then((stars) => {
-				initStarMap(stars);
+				const starMapControls = initStarMap(stars);
+
+				// Set up auto-rotation toggle button
+				const autoRotateButton = document.getElementById('autoRotateToggle');
+				autoRotateButton.addEventListener('click', () => {
+					const isRotating = starMapControls.toggleAutoRotation();
+					autoRotateButton.textContent = isRotating
+						? '⏸️ Pause Auto-Rotation'
+						: '▶️ Start Auto-Rotation';
+				});
 			});
 		</script>
 	</body>
