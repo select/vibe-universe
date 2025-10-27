@@ -37,6 +37,11 @@ function snapAngle(angle, snapPoints, threshold = 2) {
 
 export function initStarMap(allStars) {
 	const canvas = document.getElementById('myCanvas');
+
+	// Resize canvas to fill the visible screen
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
+
 	paper.setup(canvas);
 	paper.settings.handleSize = 0;
 
@@ -66,6 +71,11 @@ export function initStarMap(allStars) {
 	// Auto-rotation variables
 	let lastFrameTime = Date.now();
 	const ROTATION_SPEED = 5; // degrees per second
+
+	// Hover state variables
+	let hoveredStar = null;
+	const starHoverStates = new Map(); // starId -> { progress, radius, showLabel, animationId }
+	let visibleStars = []; // Store visible stars for hover detection
 
 	// Snap points
 	const inclinationSnapPoints = [-60, -45, -30, 0, 30, 45, 60];
@@ -223,7 +233,7 @@ export function initStarMap(allStars) {
 
 	// Auto-rotation animation loop
 	function animateRotation() {
-		if (state.isAutoRotating && !isDragging && !isPinching) {
+		if (state.isAutoRotating && !isDragging && !isPinching && !hoveredStar) {
 			const currentTime = Date.now();
 			const deltaTime = (currentTime - lastFrameTime) / 1000; // Convert to seconds
 			lastFrameTime = currentTime;
@@ -231,6 +241,11 @@ export function initStarMap(allStars) {
 			// Update rotation without snap points
 			state.rotation = (state.rotation + ROTATION_SPEED * deltaTime) % 360;
 
+			drawAxisLines();
+			drawStars();
+			controlsInstance.updateDisplays();
+		} else if (hoveredStar || starHoverStates.size > 0) {
+			// Redraw when hovering to show animations
 			drawAxisLines();
 			drawStars();
 			controlsInstance.updateDisplays();
@@ -249,19 +264,157 @@ export function initStarMap(allStars) {
 		return state.isAutoRotating;
 	}
 
+	// Animate radius change with smooth transition
+	function animateStarRadius(starId, starSize, targetRadius, duration = 500) {
+		const existingState = starHoverStates.get(starId);
+
+		// If already animating, don't restart
+		if (existingState && existingState.animationId) {
+			return;
+		}
+
+		const startRadius = existingState ? existingState.radius : starSize;
+		const startTime = Date.now();
+		const isExpanding = targetRadius > startRadius;
+
+		function step() {
+			const elapsed = Date.now() - startTime;
+			const progress = Math.min(elapsed / duration, 1);
+
+			// Ease out cubic for smooth deceleration
+			const eased = 1 - Math.pow(1 - progress, 3);
+			const currentRadius = startRadius + (targetRadius - startRadius) * eased;
+
+			// Update hover state
+			const currentState = starHoverStates.get(starId) || {};
+			starHoverStates.set(starId, {
+				...currentState,
+				progress: eased,
+				radius: currentRadius,
+				showLabel: progress >= 1 && isExpanding,
+				animationId: progress < 1 ? requestAnimationFrame(step) : null,
+				isAnimating: progress < 1,
+				targetRadius: targetRadius,
+				starSize: starSize,
+			});
+
+			if (progress >= 1) {
+				// Animation complete
+				const state = starHoverStates.get(starId);
+				if (state) {
+					state.isAnimating = false;
+					state.animationId = null;
+
+					// If this was an expansion and marked for contraction, start contracting
+					if (isExpanding && state.shouldContractAfter) {
+						state.shouldContractAfter = false;
+						// Start contraction animation
+						setTimeout(() => {
+							const currentState = starHoverStates.get(starId);
+							if (currentState) {
+								animateStarRadius(starId, currentState.radius, starSize);
+								if (hoveredStar === starId) {
+									hoveredStar = null;
+									canvas.style.cursor = 'grab';
+								}
+							}
+						}, 3000); // 3 second delay
+					}
+
+					// If this was a contraction, clean up
+					if (!isExpanding) {
+						starHoverStates.delete(starId);
+					}
+				}
+			}
+		}
+
+		step();
+	}
+
+	// Draw label with connector line for a star
+	function drawStarLabel(position, radius, name, distance, luminosity) {
+		// Line segment lengths
+		const segment1Length = 15;
+		const segment2Length = 20;
+		const angle60 = (-60 * Math.PI) / 180;
+
+		// Start at circle border on the lower-right
+		const startPoint = position.add(
+			new paper.Point(Math.cos(angle60) * radius, Math.sin(angle60) * radius),
+		);
+
+		// First segment: angled at -60°
+		const segment1End = startPoint.add(
+			new paper.Point(
+				Math.cos(angle60) * segment1Length,
+				Math.sin(angle60) * segment1Length,
+			),
+		);
+
+		// Second segment: horizontal to the right
+		const segment2End = segment1End.add(new paper.Point(segment2Length, 0));
+
+		// Draw the connector line
+		const connectorLine = new paper.Path();
+		connectorLine.strokeColor = new paper.Color(0.6, 0.6, 0.6);
+		connectorLine.strokeWidth = 0.5;
+		connectorLine.add(startPoint);
+		connectorLine.add(segment1End);
+		connectorLine.add(segment2End);
+		starGroup.addChild(connectorLine);
+
+		// Draw the main label text (star name)
+		const labelOffset = new paper.Point(5, 3);
+		const label = new paper.PointText(segment2End.add(labelOffset));
+		label.content = name;
+		label.fillColor = 'white';
+		label.fontSize = 11;
+		label.fontFamily = 'monospace';
+		label.justification = 'left';
+		starGroup.addChild(label);
+
+		// Draw distance below the name
+		const distanceOffset = new paper.Point(5, 3 + 12); // 12px below name
+		const distanceLabel = new paper.PointText(segment2End.add(distanceOffset));
+		distanceLabel.content = `${distance.toFixed(2)} ly`;
+		distanceLabel.fillColor = new paper.Color(0.7, 0.7, 0.7); // Slightly dimmed
+		distanceLabel.fontSize = 9;
+		distanceLabel.fontFamily = 'monospace';
+		distanceLabel.justification = 'left';
+		starGroup.addChild(distanceLabel);
+
+		// Draw luminosity below the distance
+		const lumOffset = new paper.Point(5, 3 + 12 + 11); // 11px below distance
+		const lumLabel = new paper.PointText(segment2End.add(lumOffset));
+		// Format luminosity: show scientific notation if very large/small
+		let lumText;
+		if (luminosity >= 100 || luminosity <= 0.01) {
+			lumText = `${luminosity.toExponential(2)}☉`;
+		} else {
+			lumText = `${luminosity.toFixed(2)}☉`;
+		}
+		lumLabel.content = lumText;
+		lumLabel.fillColor = new paper.Color(0.7, 0.7, 0.7); // Slightly dimmed
+		lumLabel.fontSize = 9;
+		lumLabel.fontFamily = 'monospace';
+		lumLabel.justification = 'left';
+		starGroup.addChild(lumLabel);
+	}
+
 	// Draw all stars
 	function drawStars() {
 		starGroup.removeChildren();
 
-		// Filter stars by distance
-		const visibleStars = allStars.filter(
+		// Filter stars by distance and update global visibleStars
+		visibleStars = allStars.filter(
 			(star) => star.dist > 0 && star.dist <= state.maxDistance,
 		);
 
 		// Update star count display
 		document.getElementById('starCountValue').textContent = visibleStars.length;
 
-		visibleStars.forEach((star) => {
+		visibleStars.forEach((star, index) => {
 			// Convert parsecs to light years and apply scale
 			const x = star.x * PARSECS_TO_LY * state.scale;
 			const y = star.y * PARSECS_TO_LY * state.scale;
@@ -274,6 +427,36 @@ export function initStarMap(allStars) {
 			// Calculate star appearance
 			const size = getStarSize(star.mag);
 			const color = getStarColor(star.mag, star.ci);
+
+			// Check if star has a name (proper or bf)
+			const hasName =
+				(star.proper && star.proper.trim()) || (star.bf && star.bf.trim());
+			const starName = star.proper && star.proper.trim() ? star.proper : star.bf;
+			const starId = `star_${index}`;
+
+			// Check hover state for this star
+			const hoverState = starHoverStates.get(starId);
+			let currentRadius = size;
+			let shouldDrawLabel = false;
+
+			if (hoverState) {
+				currentRadius = hoverState.radius;
+				shouldDrawLabel = hoverState.showLabel;
+			}
+
+			// Draw hover circle if star has a name and is being hovered
+			if (hasName && hoverState) {
+				const hoverCircle = new paper.Path.Circle(position, currentRadius);
+				hoverCircle.strokeColor = 'white';
+				hoverCircle.strokeWidth = 1;
+				hoverCircle.fillColor = new paper.Color(1, 1, 1, 0.02); // Almost invisible
+				hoverCircle.data = {
+					star: star,
+					starId: starId,
+					isHoverCircle: true,
+				};
+				starGroup.addChild(hoverCircle);
+			}
 
 			// Draw the star
 			const starCircle = new paper.Path.Circle(position, size);
@@ -293,7 +476,15 @@ export function initStarMap(allStars) {
 			// Store star data for hover/click interactions
 			starCircle.data = {
 				star: star,
+				starId: starId,
+				hasName: hasName,
+				starSize: size,
 			};
+
+			// Draw label if animation is complete
+			if (shouldDrawLabel && hasName) {
+				drawStarLabel(position, currentRadius, starName, star.dist, star.lum);
+			}
 		});
 
 		// Update info text
@@ -328,6 +519,62 @@ export function initStarMap(allStars) {
 	// Handle drag move
 	function handleMove(event) {
 		const coords = getEventCoordinates(event);
+
+		// Handle hover detection when not dragging
+		if (!isDragging && !isPinching) {
+			const rect = canvas.getBoundingClientRect();
+			const x = coords.clientX - rect.left;
+			const y = coords.clientY - rect.top;
+			const mousePoint = new paper.Point(x, y);
+
+			// Check for hover over stars
+			const hitResult = paper.project.hitTest(mousePoint, {
+				fill: true,
+				stroke: true,
+				tolerance: 5,
+			});
+
+			let foundStar = null;
+
+			if (hitResult && hitResult.item && hitResult.item.data) {
+				const itemData = hitResult.item.data;
+				// Check if we hit a star with a name or its hover circle
+				if (itemData.hasName || itemData.isHoverCircle) {
+					foundStar = itemData;
+				}
+			}
+
+			// Handle hover state changes
+			if (foundStar && foundStar.starId !== hoveredStar) {
+				// Reset previous hover only if expansion animation is complete
+				if (hoveredStar) {
+					const prevHoverState = starHoverStates.get(hoveredStar);
+					if (prevHoverState && !prevHoverState.isAnimating) {
+						// Find the star size from the previous hover
+						let prevStarSize = prevHoverState.starSize || 2;
+						animateStarRadius(hoveredStar, prevHoverState.radius, prevStarSize);
+					}
+				}
+
+				// Start new hover
+				hoveredStar = foundStar.starId;
+				const targetRadius = foundStar.starSize * 10; // 10x larger
+				animateStarRadius(foundStar.starId, foundStar.starSize, targetRadius);
+				canvas.style.cursor = 'pointer';
+			} else if (!foundStar && hoveredStar) {
+				// Mouse left all stars, schedule contraction only if expansion is complete
+				const prevHoverState = starHoverStates.get(hoveredStar);
+				if (prevHoverState && !prevHoverState.isAnimating) {
+					let prevStarSize = prevHoverState.starSize || 2;
+					animateStarRadius(hoveredStar, prevHoverState.radius, prevStarSize);
+					hoveredStar = null;
+					canvas.style.cursor = isDragging ? 'grabbing' : 'grab';
+				} else if (prevHoverState && prevHoverState.isAnimating) {
+					// Mark for later contraction once animation completes
+					prevHoverState.shouldContractAfter = true;
+				}
+			}
+		}
 
 		// Handle pinch zoom
 		if (isPinching && event.touches && event.touches.length === 2) {
@@ -433,6 +680,22 @@ export function initStarMap(allStars) {
 		isDragging = false;
 		isPinching = false;
 		lastPinchDistance = 0;
+	});
+
+	// Handle spacebar to toggle auto-rotation
+	document.addEventListener('keydown', (event) => {
+		if (event.code === 'Space' || event.key === ' ') {
+			event.preventDefault(); // Prevent page scroll
+			const isRotating = toggleAutoRotation();
+
+			// Update button text
+			const autoRotateButton = document.getElementById('autoRotateToggle');
+			if (autoRotateButton) {
+				autoRotateButton.textContent = isRotating
+					? '⏸️ Pause Auto-Rotation'
+					: '▶️ Start Auto-Rotation';
+			}
+		}
 	});
 
 	// Initialize controls
